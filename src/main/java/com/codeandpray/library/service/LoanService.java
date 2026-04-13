@@ -1,10 +1,11 @@
-package com.codeandpray.library.loan.service;
+package com.codeandpray.library.service;
 
+import com.codeandpray.library.dto.LoanRequest;
+import com.codeandpray.library.dto.LoanResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import com.codeandpray.library.loan.dto.*;
-import com.codeandpray.library.loan.entity.Loan;
-import com.codeandpray.library.loan.repository.LoanRepository;
+import com.codeandpray.library.entity.Loan;
+import com.codeandpray.library.repo.LoanRepository;
 
 import java.time.LocalDate;
 import java.util.List;

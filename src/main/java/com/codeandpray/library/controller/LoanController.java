@@ -1,9 +1,10 @@
-package com.codeandpray.library.loan.controller;
+package com.codeandpray.library.controller;
 
+import com.codeandpray.library.dto.LoanRequest;
+import com.codeandpray.library.dto.LoanResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import com.codeandpray.library.loan.dto.*;
-import com.codeandpray.library.loan.service.LoanService;
+import com.codeandpray.library.service.LoanService;
 
 import java.util.List;
 

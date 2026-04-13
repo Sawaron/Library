@@ -1,7 +1,7 @@
-package com.codeandpray.library.loan.repository;
+package com.codeandpray.library.repo;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import com.codeandpray.library.loan.entity.Loan;
+import com.codeandpray.library.entity.Loan;
 
 import java.util.List;
 import java.util.Optional;
