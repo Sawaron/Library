@@ -1,7 +1,7 @@
 package com.codeandpray.library.service;
 
 import com.codeandpray.library.entity.Reader;
-import com.codeandpray.library.repo.ReaderRepo;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -15,28 +15,28 @@ public class ReaderService{
 
 
 
-    public List<Reader> getAllReaders() {
+    public List<Reader> findAll() {
         return readers;
     }
 
-    public Reader createReader(Reader reader) {
+    public Reader save(Reader reader) {
         readers.add(reader);
         return reader;
     }
 
-    public Optional<Reader> getReaderById(Long id) {
+    public Optional<Reader> findById(Long id) {
         return readers.stream().filter( reader -> reader.getId().equals(id)).findFirst();
     }
 
-    public Optional<Reader> getReaderByName(String name) {
+    public Optional<Reader> findByName(String name) {
         return readers.stream().filter( reader -> reader.getName().equals(name)).findFirst();
     }
 
-    public Optional<Reader> updateReader(Long id, Reader updatedReader) {
-        return getReaderById(id).map( oldUser -> {
+    public Optional<Reader> updateById(Long id, Reader updatedReader) {
+        return findById(id).map(oldUser -> {
             oldUser.setName(updatedReader.getName());
             oldUser.setEmail(updatedReader.getEmail());
-            return oldUser;
+            return save(oldUser);
         });
     }
 
