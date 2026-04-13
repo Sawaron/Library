@@ -31,12 +31,9 @@ public class Reader {
     @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "Book_id")
     private List<Book> books;
 
-
-
     public Reader(Long id, String name, String email) {
         this.id = id;
         this.name = name;
         this.email = email;
-
     }
 }
