@@ -34,12 +34,12 @@ public class ReaderController {
     }
 
     @GetMapping("/byName/{name}")
-    public ResponseEntity<Reader> getReaderByName(String name) {
+    public ResponseEntity<Reader> getReaderByName(@PathVariable String name) {
         return readerService.getReaderByName(name).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
     @PutMapping("byId/{id}")
-    public ResponseEntity<Reader> updateUser(Long id, Reader updatedReader) {
+    public ResponseEntity<Reader> updateUser(@PathVariable Long id, @RequestBody Reader updatedReader) {
         return readerService.updateReader(id, updatedReader).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 }
