@@ -12,5 +12,6 @@ public class Book {
     @GeneratedValue
     long id;
     String title;
+    String author;
 
 }
