@@ -8,6 +8,7 @@ import jakarta.persistence.Id;
 
 @Entity
 public class Book {
+
     @Id
     @GeneratedValue
     long id;
