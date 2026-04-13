@@ -32,5 +32,13 @@ public class ReaderService{
         return readers.stream().filter( reader -> reader.getName().equals(name)).findFirst();
     }
 
+    public Optional<Reader> updateReader(Long id, Reader updatedReader) {
+        return getReaderById(id).map( oldUser -> {
+            oldUser.setName(updatedReader.getName());
+            oldUser.setEmail(updatedReader.getEmail());
+            return oldUser;
+        });
+    }
+
 
 }

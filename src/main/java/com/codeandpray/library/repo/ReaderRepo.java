@@ -16,4 +16,6 @@ public interface ReaderRepo extends JpaRepository<Reader, Long> {
 
     public Optional<Reader> getReaderByName(String name);
 
+    public Optional<Reader> updateUser(Long id, Reader updatedReader);
+
 }
