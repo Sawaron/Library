@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
-public class ReaderService implements ReaderRepo{
+public class ReaderService{
 
     private List<Reader> readers = new ArrayList<>();
 
@@ -18,7 +18,6 @@ public class ReaderService implements ReaderRepo{
         return readers;
     }
 
-    @Override
     public Reader createReader(Reader reader) {
         readers.add(reader);
         return reader;
