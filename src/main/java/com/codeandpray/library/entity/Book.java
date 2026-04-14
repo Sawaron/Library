@@ -1,17 +1,17 @@
 package com.codeandpray.library.entity;
 
-
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-
+import jakarta.persistence.*;
 
 @Entity
 public class Book {
 
     @Id
-    @GeneratedValue
-    long id;
-    String title;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String title;
+
+    @ManyToOne
+    private Author author;
 
 }
