@@ -12,7 +12,6 @@ public class Author {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @OneToMany(mappedBy = "author")
 
-    private List<Book> books;
     private Long id;
 
     private String name;
