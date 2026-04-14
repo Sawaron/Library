@@ -1,6 +1,9 @@
 package com.codeandpray.library.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -9,9 +12,18 @@ public class Book {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(nullable = false)
     private String title;
-    private String author;
+
+//    @ManyToOne
+//    @JoinColumn(name = "author_id")
+//    private Author author;
+
+    @Column(nullable = false)
     private String genre;
+
+    @Column(unique = true)
     private String isbn;
 
     @Column(length = 1000)
@@ -20,10 +32,14 @@ public class Book {
     @Enumerated(EnumType.STRING)
     private BookStatus status;
 
+    @CreationTimestamp
+    @Column(updatable = false)
     private LocalDateTime createdAt;
+
+    @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-    // getters & setters
+    public Book() {}
 
     public Long getId() {
         return id;
@@ -37,13 +53,13 @@ public class Book {
         this.title = title;
     }
 
-    public String getAuthor() {
-        return author;
-    }
-
-    public void setAuthor(String author) {
-        this.author = author;
-    }
+//    public Author getAuthor() {
+//        return author;
+//    }
+//
+//    public void setAuthor(Author author) {
+//        this.author = author;
+//    }
 
     public String getGenre() {
         return genre;
@@ -81,15 +97,7 @@ public class Book {
         return createdAt;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
     }
 }
