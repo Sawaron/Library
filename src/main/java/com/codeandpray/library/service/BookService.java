@@ -1,13 +1,10 @@
 package com.codeandpray.library.service;
 
-
-import com.codeandpray.library.entity.*;
-
+import com.codeandpray.library.entity.Book;
+import com.codeandpray.library.entity.BookStatus;
 import com.codeandpray.library.repo.BookRepo;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
 
 @Service
 public class BookService {
@@ -18,7 +15,6 @@ public class BookService {
         this.bookRepository = bookRepository;
     }
 
-
     public Page<Book> getBooks(String title, String author, String genre,
                                String isbn, BookStatus status,
                                int page, int size) {
@@ -26,7 +22,6 @@ public class BookService {
         Pageable pageable = PageRequest.of(page, size);
         return bookRepository.findAllByFilters(title, author, genre, isbn, status, pageable);
     }
-
 
     public Book getById(Long id) {
         return bookRepository.findById(id)
@@ -40,12 +35,12 @@ public class BookService {
 
     public Book create(Book book) {
 
-        if (book.getTitle() == null || book.getAuthor() == null || book.getIsbn() == null) {
+        if (book.getTitle() == null ||
+                book.getAuthor() == null ||
+                book.getIsbn() == null) {
             throw new RuntimeException("Invalid data");
         }
 
-        book.setCreatedAt(LocalDateTime.now());
-        book.setUpdatedAt(LocalDateTime.now());
         book.setStatus(BookStatus.AVAILABLE);
 
         return bookRepository.save(book);
@@ -55,40 +50,34 @@ public class BookService {
 
         Book book = getById(id);
 
-        book.setTitle(updatedBook.getTitle());
-        book.setAuthor(updatedBook.getAuthor());
-        book.setGenre(updatedBook.getGenre());
-        book.setIsbn(updatedBook.getIsbn());
-        book.setSummary(updatedBook.getSummary());
-        book.setStatus(updatedBook.getStatus());
-        book.setUpdatedAt(LocalDateTime.now());
+        applyUpdates(book, updatedBook);
 
         return bookRepository.save(book);
     }
-
 
     public Book updateByTitle(String title, Book updatedBook) {
 
         Book book = getByTitle(title);
 
+        applyUpdates(book, updatedBook);
+
+        return bookRepository.save(book);
+    }
+
+    private void applyUpdates(Book book, Book updatedBook) {
         book.setTitle(updatedBook.getTitle());
         book.setAuthor(updatedBook.getAuthor());
         book.setGenre(updatedBook.getGenre());
         book.setIsbn(updatedBook.getIsbn());
         book.setSummary(updatedBook.getSummary());
         book.setStatus(updatedBook.getStatus());
-        book.setUpdatedAt(LocalDateTime.now());
-
-        return bookRepository.save(book);
     }
 
     public void deleteById(Long id) {
-        Book book = getById(id);
-        bookRepository.delete(book);
+        bookRepository.delete(getById(id));
     }
 
     public void deleteByTitle(String title) {
-        Book book = getByTitle(title);
-        bookRepository.delete(book);
+        bookRepository.delete(getByTitle(title));
     }
 }
