@@ -10,7 +10,7 @@ public class BookMapper {
     public static Book toEntity(CreateBookRequest dto) {
         return Book.builder()
                 .title(dto.getTitle())
-                .author(dto.getAuthor())
+                .author(null)
                 .genre(dto.getGenre())
                 .isbn(dto.getIsbn())
                 .summary(dto.getSummary())
@@ -20,7 +20,6 @@ public class BookMapper {
     public static void updateEntity(Book book, UpdateBookRequest dto) {
 
         if (dto.getTitle() != null) book.setTitle(dto.getTitle());
-        if (dto.getAuthor() != null) book.setAuthor(dto.getAuthor());
         if (dto.getGenre() != null) book.setGenre(dto.getGenre());
         if (dto.getIsbn() != null) book.setIsbn(dto.getIsbn());
         if (dto.getSummary() != null) book.setSummary(dto.getSummary());
@@ -33,7 +32,7 @@ public class BookMapper {
     public static BookReaderResponse toReader(Book book) {
         return BookReaderResponse.builder()
                 .title(book.getTitle())
-                .author(book.getAuthor())
+                .author(book.getAuthor().getName())
                 .genre(book.getGenre())
                 .summary(book.getSummary())
                 .status(book.getStatus().name())
