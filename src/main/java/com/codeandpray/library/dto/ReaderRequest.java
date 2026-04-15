@@ -14,7 +14,7 @@ public class ReaderRequest {
     private String firstName;
     private String lastName;
 
-    private Long phone;
+    private String phone;
     private String email;
 
     private String address;

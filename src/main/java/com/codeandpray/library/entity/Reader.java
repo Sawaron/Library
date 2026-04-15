@@ -31,7 +31,7 @@ public class Reader {
     private String lastname;
 
     @Column(name = "reader_phone")
-    private Long phone;
+    private String phone;
 
     @Column(name = "reader_address")
     private String address;

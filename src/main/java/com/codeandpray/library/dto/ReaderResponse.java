@@ -18,7 +18,7 @@ public class ReaderResponse {
     private String lastName;
 
     private String email;
-    private Long phone;
+    private String phone;
 
     private String address;
 
