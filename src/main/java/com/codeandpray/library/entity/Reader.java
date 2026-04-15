@@ -44,7 +44,5 @@ public class Reader {
 
     @Column(name = "reader_email")
     private String email;
-//
-//    @OneToMany(mappedBy = "reader")
-//    private List<Book> books;
+
 }
