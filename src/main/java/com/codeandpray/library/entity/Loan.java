@@ -1,4 +1,4 @@
-package com.codeandpray.library.loan.entity;
+package com.codeandpray.library.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
