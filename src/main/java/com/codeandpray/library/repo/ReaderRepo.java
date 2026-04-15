@@ -9,6 +9,6 @@ import java.util.Optional;
 
 public interface ReaderRepo extends JpaRepository<Reader, Long> {
 
-    public Optional<Reader> findByName(String name);
+    public Optional<Reader> findByFirstname(String name);
 
 }

@@ -30,7 +30,7 @@ public class ReaderService{
     }
 
     public Optional<Reader> findByName(String name) {
-        return readerRepo.findByName(name);
+        return readerRepo.findByFirstname(name);
     }
 
     public Optional<Reader> updateById(Long id, Reader updatedReader) {
