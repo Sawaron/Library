@@ -30,6 +30,4 @@ public interface BookRepo extends JpaRepository<Book, Long> {
             @Param("status") BookStatus status,
             Pageable pageable
     );
-
-    Optional<Book>  search(String title);
 }

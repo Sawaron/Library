@@ -1,6 +1,7 @@
 package com.codeandpray.library.controller;
 
 import com.codeandpray.library.dto.BookReaderResponse;
+import com.codeandpray.library.dto.CreateBookRequest;
 import com.codeandpray.library.entity.Book;
 import com.codeandpray.library.enums.BookStatus;
 import com.codeandpray.library.mapper.BookMapper;
@@ -63,11 +64,11 @@ public class BookController {
     }
 
     @PostMapping
-    public Book create(@RequestBody Book book,
+    public Book create(@RequestBody CreateBookRequest request,
                        @RequestHeader(value = "Role", required = false) String role) {
 
         checkLibrarian(role);
-        return bookService.create(book);
+        return bookService.create(request);
     }
 
     @PutMapping("/{id}")

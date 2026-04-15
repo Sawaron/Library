@@ -10,7 +10,6 @@ public class BookMapper {
     public static Book toEntity(CreateBookRequest dto) {
         return Book.builder()
                 .title(dto.getTitle())
-                .author(null)
                 .genre(dto.getGenre())
                 .isbn(dto.getIsbn())
                 .summary(dto.getSummary())
