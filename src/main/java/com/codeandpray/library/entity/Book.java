@@ -1,5 +1,6 @@
 package com.codeandpray.library.entity;
 
+import com.codeandpray.library.enums.BookStatus;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;

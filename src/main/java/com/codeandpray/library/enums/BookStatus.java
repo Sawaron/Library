@@ -1,4 +1,4 @@
-package com.codeandpray.library.entity;
+package com.codeandpray.library.enums;
 
 public enum BookStatus {
     AVAILABLE,

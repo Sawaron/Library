@@ -1,13 +1,14 @@
 package com.codeandpray.library.controller;
 
 import com.codeandpray.library.entity.*;
+import com.codeandpray.library.enums.BookStatus;
 import com.codeandpray.library.service.BookService;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
 
 @RestController
-@RequestMapping("/books")
+@RequestMapping("/api/books")
 public class BookController {
 
     private final BookService bookService;

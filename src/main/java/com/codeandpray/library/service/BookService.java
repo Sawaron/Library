@@ -1,7 +1,7 @@
 package com.codeandpray.library.service;
 
 import com.codeandpray.library.entity.Book;
-import com.codeandpray.library.entity.BookStatus;
+import com.codeandpray.library.enums.BookStatus;
 import com.codeandpray.library.repo.BookRepo;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;

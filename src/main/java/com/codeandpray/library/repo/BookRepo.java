@@ -1,7 +1,7 @@
 package com.codeandpray.library.repo;
 
 import com.codeandpray.library.entity.Book;
-import com.codeandpray.library.entity.BookStatus;
+import com.codeandpray.library.enums.BookStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
