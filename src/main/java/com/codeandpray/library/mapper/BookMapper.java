@@ -30,7 +30,7 @@ public class BookMapper {
         }
     }
 
-    public static BookReaderResponse toReaderDto(Book book) {
+    public static BookReaderResponse toReader(Book book) {
         return BookReaderResponse.builder()
                 .title(book.getTitle())
                 .author(book.getAuthor())
