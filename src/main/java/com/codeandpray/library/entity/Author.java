@@ -1,17 +1,19 @@
 package com.codeandpray.library.entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDate;
 import java.util.List;
 
 @Entity
+@Getter
+@Setter
 public class Author {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @OneToMany(mappedBy = "author")
-
     private Long id;
 
     private String name;
@@ -20,4 +22,6 @@ public class Author {
     private LocalDate birthDate;
     private LocalDate deathDate;
 
+    @OneToMany(mappedBy = "author")
+    private List<Book> books;
 }
