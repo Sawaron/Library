@@ -1,4 +1,4 @@
-package com.codeandpray.library.loan.dto;
+package com.codeandpray.library.dto;
 
 import lombok.Data;
 import java.time.LocalDate;
