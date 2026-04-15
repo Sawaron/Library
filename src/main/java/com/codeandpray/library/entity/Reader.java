@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
 
@@ -30,21 +31,20 @@ public class Reader {
     private String lastname;
 
     @Column(name = "reader_phone")
-    private int phone;
+    private Long phone;
 
     @Column(name = "reader_address")
-    private int address;
+    private String address;
 
     @Column(name = "reader_status")
     private String status;
 
     @Column(name = "reader_registration_date")
-    private Date registrationDate;
+    private LocalDate registrationDate;
 
     @Column(name = "reader_email")
     private String email;
 
-    @Column
 //    @OneToMany()
     private List<Book> books;
 }
