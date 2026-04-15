@@ -31,5 +31,5 @@ public interface BookRepo extends JpaRepository<Book, Long> {
             Pageable pageable
     );
 
-    Optional<Book> findByTitle(String title);
+    Optional<Book>  search(String title);
 }

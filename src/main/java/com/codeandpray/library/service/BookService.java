@@ -20,16 +20,11 @@ public class BookService {
                                int page, int size) {
 
         Pageable pageable = PageRequest.of(page, size);
-        return bookRepository.findAllByFilters(title, author, genre, isbn, status, pageable);
+        return bookRepository.search(title, author, genre, isbn, status, pageable);
     }
 
     public Book getById(Long id) {
         return bookRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Book not found"));
-    }
-
-    public Book getByTitle(String title) {
-        return bookRepository.findByTitle(title)
                 .orElseThrow(() -> new RuntimeException("Book not found"));
     }
 
@@ -55,29 +50,28 @@ public class BookService {
         return bookRepository.save(book);
     }
 
-    public Book updateByTitle(String title, Book updatedBook) {
-
-        Book book = getByTitle(title);
-
-        applyUpdates(book, updatedBook);
-
-        return bookRepository.save(book);
-    }
-
     private void applyUpdates(Book book, Book updatedBook) {
-        book.setTitle(updatedBook.getTitle());
-        book.setAuthor(updatedBook.getAuthor());
-        book.setGenre(updatedBook.getGenre());
-        book.setIsbn(updatedBook.getIsbn());
-        book.setSummary(updatedBook.getSummary());
-        book.setStatus(updatedBook.getStatus());
+
+        if (updatedBook.getTitle() != null)
+            book.setTitle(updatedBook.getTitle());
+
+        if (updatedBook.getAuthor() != null)
+            book.setAuthor(updatedBook.getAuthor());
+
+        if (updatedBook.getGenre() != null)
+            book.setGenre(updatedBook.getGenre());
+
+        if (updatedBook.getIsbn() != null)
+            book.setIsbn(updatedBook.getIsbn());
+
+        if (updatedBook.getSummary() != null)
+            book.setSummary(updatedBook.getSummary());
+
+        if (updatedBook.getStatus() != null)
+            book.setStatus(updatedBook.getStatus());
     }
 
     public void deleteById(Long id) {
         bookRepository.delete(getById(id));
-    }
-
-    public void deleteByTitle(String title) {
-        bookRepository.delete(getByTitle(title));
     }
 }

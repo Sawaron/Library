@@ -22,14 +22,14 @@ public class Book {
     @Column(nullable = false)
     private String title;
 
-//    @ManyToOne
-//    @JoinColumn(name = "author_id")
-//    private Author author;
+    @ManyToOne
+    @JoinColumn(name = "author_id")
+    private Author author;
 
     @Column(nullable = false)
     private String genre;
 
-    @Column(unique = true)
+    @Column(unique = true, nullable = false)
     private String isbn;
 
     @Column(length = 1000)
