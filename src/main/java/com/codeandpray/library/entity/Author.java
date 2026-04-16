@@ -1,5 +1,6 @@
 package com.codeandpray.library.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -22,6 +23,7 @@ public class Author {
     private LocalDate birthDate;
     private LocalDate deathDate;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "author")
     private List<Book> books;
 }
