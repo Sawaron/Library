@@ -9,7 +9,7 @@ import com.codeandpray.library.service.LoanService;
 import java.util.List;
 
 @RestController
-@RequestMapping("/loans")
+@RequestMapping("api/loans")
 @RequiredArgsConstructor
 public class LoanController {
 
