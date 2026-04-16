@@ -1,6 +1,5 @@
 package com.codeandpray.library.entity;
 
-
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -45,6 +44,6 @@ public class Reader {
     @Column(name = "reader_email")
     private String email;
 
-//    @OneToMany()
+    // @OneToMany()
     private List<Book> books;
 }
