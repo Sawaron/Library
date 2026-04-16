@@ -1,6 +1,4 @@
-CREATE SCHEMA library;
-
-SET search_path TO library;
+SET search_path TO public;
 
 CREATE TABLE author (
                         id BIGSERIAL PRIMARY KEY,
@@ -46,4 +44,14 @@ CREATE TABLE reader (
                         reader_status VARCHAR(50),
                         reader_registration_date DATE,
                         reader_email VARCHAR(255) UNIQUE
+);
+
+CREATE TABLE reservation (
+                                     id BIGSERIAL PRIMARY KEY,
+                                     book_id BIGINT NOT NULL,
+                                     reader_id BIGINT NOT NULL,
+                                     reservation_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                     status VARCHAR(50) NOT NULL,
+                                     CONSTRAINT fk_reservation_book FOREIGN KEY (book_id) REFERENCES library.book(id),
+                                     CONSTRAINT fk_reservation_reader FOREIGN KEY (reader_id) REFERENCES library.reader(reader_id)
 );
