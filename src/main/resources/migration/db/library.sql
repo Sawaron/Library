@@ -35,7 +35,7 @@ CREATE TABLE loans (
                        status VARCHAR(50)
 );
 
-CREATE TABLE reader (
+CREATE TABLE user (
                         reader_id BIGSERIAL PRIMARY KEY,
                         reader_name VARCHAR(255) NOT NULL,
                         reader_lastname VARCHAR(255) NOT NULL,
@@ -53,5 +53,5 @@ CREATE TABLE reservation (
                                      reservation_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                                      status VARCHAR(50) NOT NULL,
                                      CONSTRAINT fk_reservation_book FOREIGN KEY (book_id) REFERENCES library.book(id),
-                                     CONSTRAINT fk_reservation_reader FOREIGN KEY (reader_id) REFERENCES library.reader(reader_id)
+                                     CONSTRAINT fk_reservation_reader FOREIGN KEY (reader_id) REFERENCES library.user(reader_id)
 );

@@ -8,8 +8,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
-import java.util.Date;
-import java.util.List;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -17,32 +15,31 @@ import java.util.List;
 @Setter
 @Entity
 @Table
-public class Reader {
+public class User {
 
     @Id
-    @Column(name = "reader_id")
+    @Column(name = "user_id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "reader_name")
+    @Column(name = "user_name")
     private String firstname;
 
-    @Column(name = "reader_lastname")
+    @Column(name = "user_lastname")
     private String lastname;
 
-    @Column(name = "reader_phone")
+    @Column(name = "user_email")
+    private String email;
+
+    @Column(name = "user_phone")
     private String phone;
 
-    @Column(name = "reader_address")
-    private String address;
+    @Column(name = "user_password")
+    private String password;
 
-    @Column(name = "reader_status")
-    private String status;
-
-    @Column(name = "reader_registration_date")
+    @Column(name = "user_registration_date")
     private LocalDate registrationDate;
 
-    @Column(name = "reader_email")
-    private String email;
+    private String role;
 
 }
