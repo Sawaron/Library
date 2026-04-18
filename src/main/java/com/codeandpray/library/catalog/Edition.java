@@ -20,7 +20,12 @@ public class Edition {
     @JoinColumn(name = "book_id")
     private Book book;
 
+    @Column(name = "edition_number")
     private Long editionNumber;
+
+    @Column(name = "edition_publisher")
     private String publisher;
+
+    @Column(name = "edition_publish_date")
     private LocalDate publishDate;
 }
