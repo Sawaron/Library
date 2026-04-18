@@ -2,13 +2,13 @@ package com.codeandpray.library.service;
 
 import com.codeandpray.library.dto.ReservationResponse;
 import com.codeandpray.library.entity.Book;
-import com.codeandpray.library.entity.Reader;
+import com.codeandpray.library.entity.User;
 import com.codeandpray.library.entity.Reservation;
 import com.codeandpray.library.enums.BookStatus;
 import com.codeandpray.library.enums.ReservationStatus;
 import com.codeandpray.library.repo.BookRepo;
-import com.codeandpray.library.repo.ReaderRepo;
 import com.codeandpray.library.repo.ReservationRepo;
+import com.codeandpray.library.repo.UserRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,16 +20,16 @@ import java.time.LocalDateTime;
 public class ReservationService {
 
     private final ReservationRepo reservationRepo;
-    private final ReaderRepo readerRepo;
+    private final UserRepo userRepo;
     private final BookRepo bookRepo;
 
     @Transactional
-    public ReservationResponse create(Long bookId, Long readerId) {
+    public ReservationResponse create(Long bookId, Long userId) {
 
         Book book = bookRepo.findById(bookId)
                 .orElseThrow(() -> new RuntimeException("Book not found"));
-        Reader reader = readerRepo.findById(readerId)
-                .orElseThrow(() -> new RuntimeException("Reader not found"));
+        User user = userRepo.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
 
         if (book.getStatus() != BookStatus.AVAILABLE) {
@@ -38,7 +38,7 @@ public class ReservationService {
 
         Reservation reservation = new Reservation();
         reservation.setBook(book);
-        reservation.setReader(reader);
+        reservation.setUser(user);
         reservation.setReservationDate(LocalDateTime.now());
         reservation.setStatus(ReservationStatus.PENDING);
 
@@ -52,7 +52,7 @@ public class ReservationService {
         return ReservationResponse.builder()
                 .id(saved.getId())
                 .bookTitle(book.getTitle())
-                .readerFullName(reader.getFirstname() + " " + reader.getLastname())
+                .readerFullName(user.getFirstname() + " " + user.getLastname())
                 .reservationDate(saved.getReservationDate())
                 .status(saved.getStatus().name())
                 .build();
