@@ -45,7 +45,7 @@ public class BookService {
         Book book = BookMapper.toEntity(dto);
 
 
-        book.setAuthor(author);
+        book.setBookAuthor(author);
         book.setStatus(BookStatus.AVAILABLE);
 
         return bookRepository.save(book);
@@ -65,17 +65,17 @@ public class BookService {
         if (updatedBook.getTitle() != null)
             book.setTitle(updatedBook.getTitle());
 
-        if (updatedBook.getAuthor() != null)
-            book.setAuthor(updatedBook.getAuthor());
+        if (updatedBook.getBookAuthor() != null)
+            book.setBookAuthor(updatedBook.getBookAuthor());
 
-        if (updatedBook.getGenre() != null)
-            book.setGenre(updatedBook.getGenre());
+        if (updatedBook.getBookGenre() != null)
+            book.setBookGenre(updatedBook.getBookGenre());
 
         if (updatedBook.getIsbn() != null)
             book.setIsbn(updatedBook.getIsbn());
 
-        if (updatedBook.getSummary() != null)
-            book.setSummary(updatedBook.getSummary());
+        if (updatedBook.getDescription() != null)
+            book.setDescription(updatedBook.getDescription());
 
         if (updatedBook.getStatus() != null)
             book.setStatus(updatedBook.getStatus());

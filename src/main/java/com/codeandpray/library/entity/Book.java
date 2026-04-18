@@ -1,10 +1,12 @@
 package com.codeandpray.library.entity;
 
+import com.codeandpray.library.enums.AgeCategory;
 import com.codeandpray.library.enums.BookStatus;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import lombok.*;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -23,26 +25,43 @@ public class Book {
     @Column(nullable = false)
     private String title;
 
-    @ManyToOne
-    @JoinColumn(name = "author_id")
-    private Author author;
+    @Column(length = 1000)
+    private String description;
+
+    @CreationTimestamp
+    @Column(updatable = false, name = "publish_date")
+    private LocalDateTime publishDate;
+
+    @Column(name = "page_count", nullable = false)
+    private int pageCount;
 
     @Column(nullable = false)
-    private String genre;
+    private String language;
+
+    private float price;
+
+    @Column(name = "has_audiobook")
+    private boolean hasAudiobook;
+
+    @Column(name = "reader_time")
+    private Integer readerTime;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "age_category")
+    private AgeCategory ageCategory;
 
     @Column(unique = true, nullable = false)
     private String isbn;
 
-    @Column(length = 1000)
-    private String summary;
+    @Column(nullable = false, name = "book_genre")
+    private String bookGenre;
+
+
+    @ManyToOne
+    @JoinColumn(name = "author_id")
+    private Author bookAuthor;
+
 
     @Enumerated(EnumType.STRING)
     private BookStatus status;
-
-    @CreationTimestamp
-    @Column(updatable = false)
-    private LocalDateTime createdAt;
-
-    @UpdateTimestamp
-    private LocalDateTime updatedAt;
 }

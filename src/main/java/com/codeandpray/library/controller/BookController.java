@@ -1,6 +1,5 @@
 package com.codeandpray.library.controller;
 
-import com.codeandpray.library.dto.BookReaderResponse;
 import com.codeandpray.library.dto.CreateBookRequest;
 import com.codeandpray.library.entity.Book;
 import com.codeandpray.library.enums.BookStatus;
@@ -38,21 +37,16 @@ public class BookController {
             @RequestHeader(value = "Role", required = false) String role
     ) {
 
+        if (id != null) {
+            checkLibrarian(role);
+            return BookMapper.toResponse(bookService.getById(id));
+        }
+
         Page<Book> books = bookService.getBooks(
                 title, author, genre, isbn, status, page, size
         );
 
-        if (id != null) {
-            checkLibrarian(role);
-            Book book = bookService.getById(id);
-            return book;
-        }
-
-        if ("LIBRARIAN".equals(role)) {
-            return books;
-        }
-
-        return books.map(BookMapper::toReader);
+        return books.map(BookMapper::toResponse);
     }
 
     @GetMapping("/{id}")
