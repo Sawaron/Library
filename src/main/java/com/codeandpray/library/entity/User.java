@@ -40,6 +40,7 @@ public class User {
     @Column(name = "user_registration_date")
     private LocalDate registrationDate;
 
+    @Column(name = "user_role")
     private String role;
 
 }
