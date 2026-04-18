@@ -30,7 +30,7 @@ public class Reservation {
 
     @ManyToOne
     @JoinColumn(name = "reader_id")
-    private Reader reader;
+    private User user;
 
     private LocalDateTime reservationDate;
 
