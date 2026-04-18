@@ -20,7 +20,7 @@ public class Edition {
     @JoinColumn(name = "book_id")
     private Book book;
 
-    private int editionNumber;
+    private Long editionNumber;
     private String publisher;
     private LocalDate publishDate;
 }
