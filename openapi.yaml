@@ -1,0 +1,983 @@
+openapi: 3.0.0
+info:
+  title: Library Management API
+  description: >
+    REST API для управления библиотекой.
+
+
+    ## Соответствие схеме БД
+
+    Все поля API используют `camelCase`. В комментариях к схемам указано
+    соответствие полям БД (`snake_case`).
+
+    Поле `phoe` в таблице `user` исправлено на `phone`.
+
+    Поле `name` в таблице `user` разделено на `firstName` и `lastName` для
+    удобства клиентских форм.
+
+
+    ## Аутентификация
+
+    Используется JWT Bearer Token. Требуются роли: `reader` (базовые операции) и
+    `librarian` (управление каталогом, пользователями, штрафами).
+
+
+    ## Пагинация
+
+    Все списочные эндпоинты поддерживают параметры `page` и `pageSize`.
+  version: 1.0.0
+  contact:
+    name: Library Analytics & Dev Team
+    email: support@library.com
+  license:
+    name: MIT
+servers:
+  - url: http://localhost:8000/api
+    description: Local Development
+  - url: https://staging-api.library.com/api
+    description: Staging
+  - url: https://api.library.com/api
+    description: Production
+tags:
+  - name: Books
+    description: Книги, издания, популярность
+  - name: Readers
+    description: Пользователи/читатели
+  - name: Authors
+    description: Авторы книг
+  - name: Genres
+    description: Жанры
+  - name: Loans
+    description: Выдача и возврат книг
+  - name: Reservations
+    description: Бронирования
+  - name: Reviews
+    description: Отзывы и рейтинги
+  - name: Fines
+    description: Штрафы
+  - name: Notifications
+    description: Уведомления
+security:
+  - bearerAuth: []
+paths:
+  /books:
+    get:
+      tags:
+        - Books
+      summary: Получить список книг
+      operationId: getBooks
+      parameters:
+        - name: title
+          in: query
+          schema:
+            type: string
+        - name: authorId
+          in: query
+          schema:
+            type: integer
+        - name: genreId
+          in: query
+          schema:
+            type: integer
+        - name: minPrice
+          in: query
+          schema:
+            type: number
+            format: float
+        - name: maxPrice
+          in: query
+          schema:
+            type: number
+            format: float
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+      responses:
+        '200':
+          description: Список книг
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResponse'
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Book'
+    post:
+      tags:
+        - Books
+      summary: Добавить книгу
+      operationId: createBook
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBookRequest'
+      responses:
+        '201':
+          description: Книга создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+  /books/{id}:
+    get:
+      tags:
+        - Books
+      summary: Получить книгу по ID
+      operationId: getBookById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Детали книги
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookDetail'
+  /books/{id}/editions:
+    get:
+      tags:
+        - Books
+      summary: Список изданий книги
+      operationId: getBookEditions
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Список изданий
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Edition'
+  /readers:
+    get:
+      tags:
+        - Readers
+      summary: Список читателей
+      operationId: getReaders
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: email
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Список читателей
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResponse'
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Reader'
+    post:
+      tags:
+        - Readers
+      summary: Зарегистрировать читателя
+      operationId: createReader
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateReaderRequest'
+      responses:
+        '201':
+          description: Читатель создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reader'
+  /readers/{id}:
+    get:
+      tags:
+        - Readers
+      summary: Информация о читателе
+      operationId: getReaderById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Детали читателя
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reader'
+  /authors:
+    get:
+      tags:
+        - Authors
+      summary: Список авторов
+      operationId: getAuthors
+      responses:
+        '200':
+          description: Список авторов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Author'
+    post:
+      tags:
+        - Authors
+      summary: Добавить автора
+      operationId: createAuthor
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAuthorRequest'
+      responses:
+        '201':
+          description: Автор создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Author'
+  /genres:
+    get:
+      tags:
+        - Genres
+      summary: Список жанров
+      operationId: getGenres
+      responses:
+        '200':
+          description: Список жанров
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Genre'
+  /loans:
+    get:
+      tags:
+        - Loans
+      summary: Список выдач
+      operationId: getLoans
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: readerId
+          in: query
+          schema:
+            type: integer
+        - name: bookId
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - active
+              - returned
+              - overdue
+      responses:
+        '200':
+          description: Список выдач
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResponse'
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Loan'
+    post:
+      tags:
+        - Loans
+      summary: Выдать книгу
+      operationId: createLoan
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLoanRequest'
+      responses:
+        '201':
+          description: Выдача зарегистрирована
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Loan'
+  /loans/{id}:
+    get:
+      tags:
+        - Loans
+      summary: Детали выдачи
+      operationId: getLoanById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Детали выдачи
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Loan'
+  /loans/{id}/return:
+    post:
+      tags:
+        - Loans
+      summary: Вернуть книгу
+      operationId: returnLoan
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                actualReturnDate:
+                  type: string
+                  format: date-time
+      responses:
+        '200':
+          description: Книга возвращена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Loan'
+  /loans/{id}/fines:
+    get:
+      tags:
+        - Fines
+      summary: Штрафы по выдаче
+      operationId: getLoanFines
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Список штрафов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Fine'
+  /reservations:
+    get:
+      tags:
+        - Reservations
+      summary: Список бронирований
+      operationId: getReservations
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: readerId
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - active
+              - fulfilled
+              - cancelled
+              - expired
+      responses:
+        '200':
+          description: Список бронирований
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResponse'
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Reservation'
+    post:
+      tags:
+        - Reservations
+      summary: Забронировать книгу
+      operationId: createReservation
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateReservationRequest'
+      responses:
+        '201':
+          description: Бронирование создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+  /reservations/{id}:
+    get:
+      tags:
+        - Reservations
+      summary: Детали бронирования
+      operationId: getReservationById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Детали бронирования
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+    delete:
+      tags:
+        - Reservations
+      summary: Отменить бронирование
+      operationId: cancelReservation
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Бронирование отменено
+  /reviews:
+    get:
+      tags:
+        - Reviews
+      summary: Список отзывов
+      operationId: getReviews
+      parameters:
+        - name: bookId
+          in: query
+          schema:
+            type: integer
+        - name: readerId
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Список отзывов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Review'
+    post:
+      tags:
+        - Reviews
+      summary: Оставить отзыв/рейтинг
+      operationId: createReview
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateReviewRequest'
+      responses:
+        '201':
+          description: Отзыв создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+  /fines/{id}/pay:
+    post:
+      tags:
+        - Fines
+      summary: Оплатить штраф
+      operationId: payFine
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Штраф оплачен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Fine'
+  /notifications:
+    get:
+      tags:
+        - Notifications
+      summary: Уведомления пользователя
+      operationId: getNotifications
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: isRead
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Список уведомлений
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Notification'
+  /notifications/{id}/read:
+    post:
+      tags:
+        - Notifications
+      summary: Отметить как прочитанное
+      operationId: markNotificationRead
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Успешно обновлено
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    PaginatedResponse:
+      type: object
+      properties:
+        data:
+          type: array
+        total:
+          type: integer
+        page:
+          type: integer
+        pageSize:
+          type: integer
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+    Book:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        publishDate:
+          type: string
+          format: date
+        pageCount:
+          type: integer
+        language:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        price:
+          type: number
+          format: float
+        hasAudiobook:
+          type: boolean
+        readingTime:
+          type: integer
+        ageCategory:
+          type: string
+        status:
+          type: string
+          enum:
+            - available
+            - issued
+            - reserved
+          description: Вычисляемое поле на основе Loan/Reservation
+        authorId:
+          type: integer
+        genreId:
+          type: integer
+    BookDetail:
+      allOf:
+        - $ref: '#/components/schemas/Book'
+        - type: object
+          properties:
+            author:
+              $ref: '#/components/schemas/Author'
+            genre:
+              $ref: '#/components/schemas/Genre'
+            averageRating:
+              type: number
+              format: float
+    CreateBookRequest:
+      type: object
+      required:
+        - title
+        - authorId
+        - genreId
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        publishDate:
+          type: string
+          format: date
+        pageCount:
+          type: integer
+        language:
+          type: string
+          default: ru
+        price:
+          type: number
+          format: float
+        hasAudiobook:
+          type: boolean
+          default: false
+        readingTime:
+          type: integer
+        ageCategory:
+          type: string
+        authorId:
+          type: integer
+        genreId:
+          type: integer
+    Reader:
+      type: object
+      description: >-
+        Соответствует таблице `user`. Поля `name` разделены на
+        `firstName`/`lastName` для API. `phoe` исправлено на `phone`.
+      properties:
+        id:
+          type: integer
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        status:
+          type: string
+          enum:
+            - active
+            - inactive
+          default: active
+        registrationDate:
+          type: string
+          format: date-time
+    CreateReaderRequest:
+      type: object
+      required:
+        - firstName
+        - lastName
+        - email
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+    Author:
+      type: object
+      properties:
+        id:
+          type: integer
+        firstName:
+          type: string
+        lastName:
+          type: string
+        birthYear:
+          type: integer
+        deathYear:
+          type: integer
+          nullable: true
+    CreateAuthorRequest:
+      type: object
+      required:
+        - firstName
+        - lastName
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        birthYear:
+          type: integer
+        deathYear:
+          type: integer
+          nullable: true
+    Genre:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+    Edition:
+      type: object
+      properties:
+        id:
+          type: integer
+        bookId:
+          type: integer
+        editionNumber:
+          type: integer
+        publisher:
+          type: string
+        publishDate:
+          type: string
+          format: date
+    Loan:
+      type: object
+      properties:
+        id:
+          type: integer
+        bookId:
+          type: integer
+        readerId:
+          type: integer
+        loanDate:
+          type: string
+          format: date-time
+        returnDate:
+          type: string
+          format: date-time
+        actualReturnDate:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          type: string
+          enum:
+            - active
+            - returned
+            - overdue
+    CreateLoanRequest:
+      type: object
+      required:
+        - bookId
+        - readerId
+        - returnDate
+      properties:
+        bookId:
+          type: integer
+        readerId:
+          type: integer
+        returnDate:
+          type: string
+          format: date-time
+    Reservation:
+      type: object
+      properties:
+        id:
+          type: integer
+        bookId:
+          type: integer
+        readerId:
+          type: integer
+        reservationDate:
+          type: string
+          format: date-time
+        availableDate:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          type: string
+          enum:
+            - active
+            - fulfilled
+            - cancelled
+            - expired
+    CreateReservationRequest:
+      type: object
+      required:
+        - bookId
+        - readerId
+      properties:
+        bookId:
+          type: integer
+        readerId:
+          type: integer
+        availableDate:
+          type: string
+          format: date-time
+    Review:
+      type: object
+      description: >-
+        Объединяет таблицы Rating и Review. Поле `rating` из БД маппится в
+        `score`.
+      properties:
+        id:
+          type: integer
+        bookId:
+          type: integer
+        readerId:
+          type: integer
+        score:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+          maxLength: 2000
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+    CreateReviewRequest:
+      type: object
+      required:
+        - bookId
+        - score
+      properties:
+        bookId:
+          type: integer
+        score:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+          maxLength: 2000
+          nullable: true
+    Fine:
+      type: object
+      properties:
+        id:
+          type: integer
+        loanId:
+          type: integer
+        readerId:
+          type: integer
+        amount:
+          type: number
+          format: float
+        reason:
+          type: string
+        status:
+          type: string
+          enum:
+            - unpaid
+            - paid
+        createdAt:
+          type: string
+          format: date-time
+    Notification:
+      type: object
+      properties:
+        id:
+          type: integer
+        readerId:
+          type: integer
+        type:
+          type: string
+          enum:
+            - reservation_ready
+            - loan_due_soon
+            - fine_created
+            - system
+        message:
+          type: string
+        isRead:
+          type: boolean
+          default: false
+        createdAt:
+          type: string
+          format: date-time
