@@ -1,0 +1,32 @@
+openapi: 3.0.3
+info:
+  title: Book API
+  version: 1.0.0
+paths:
+  /books:
+    get: { summary: Список книг, responses: { '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Book' } } } } } } }
+    post: { summary: Создать книгу, requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Book' } } } }, responses: { '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/Book' } } } } } }
+  /books/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ]
+    get: { summary: Получить книгу, responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Book' } } } } } }
+    put: { summary: Обновить книгу, requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Book' } } } }, responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Book' } } } } } }
+    delete: { summary: Удалить книгу, responses: { '204': { description: No Content } } }
+
+components:
+  schemas:
+    Book:
+      type: object
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        description: { type: string }
+        publish_date: { type: string, format: date }
+        page_count: { type: integer }
+        language: { type: string }
+        price: { type: number, format: float }
+        has_audiobook: { type: boolean }
+        reading_time: { type: integer }
+        age_category: { type: string }
+        isbn: { type: string }
+        book_genre: { type: string }
+        book_author: { type: string }

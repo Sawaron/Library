@@ -1,0 +1,26 @@
+openapi: 3.0.3
+info:
+  title: Loan API
+  version: 1.0.0
+paths:
+  /loans:
+    get: { summary: Список выдач, responses: { '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Loan' } } } } } } }
+    post: { summary: Создать выдачу, requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Loan' } } } }, responses: { '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/Loan' } } } } } }
+  /loans/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ]
+    get: { summary: Получить выдачу, responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Loan' } } } } } }
+    put: { summary: Обновить выдачу, requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Loan' } } } }, responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Loan' } } } } } }
+    delete: { summary: Удалить выдачу, responses: { '204': { description: No Content } } }
+
+components:
+  schemas:
+    Loan:
+      type: object
+      properties:
+        id: { type: integer }
+        book_id: { type: integer }
+        user_id: { type: integer }
+        loan_date: { type: string, format: date }
+        return_date: { type: string, format: date }
+        actual_return_date: { type: string, format: date }
+        status: { $ref: './common.yaml#/components/schemas/LoanStatus' }

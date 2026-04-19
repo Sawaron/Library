@@ -35,7 +35,7 @@ CREATE TABLE loans (
                        status VARCHAR(50)
 );
 
-CREATE TABLE reader (
+CREATE TABLE user (
                         reader_id BIGSERIAL PRIMARY KEY,
                         reader_name VARCHAR(255) NOT NULL,
                         reader_lastname VARCHAR(255) NOT NULL,
