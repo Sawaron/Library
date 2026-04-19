@@ -1,0 +1,25 @@
+  openapi: 3.0.3
+  info:
+    title: Fine API
+    version: 1.0.0
+  paths:
+    /fines:
+      get: { summary: Список штрафов, responses: { '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Fine' } } } } } } }
+      post: { summary: Создать штраф, requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Fine' } } } }, responses: { '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/Fine' } } } } } }
+    /fines/{id}:
+      parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ]
+      get: { summary: Получить штраф, responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Fine' } } } } } }
+      put: { summary: Обновить штраф, requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Fine' } } } }, responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Fine' } } } } } }
+      delete: { summary: Удалить штраф, responses: { '204': { description: No Content } } }
+
+  components:
+    schemas:
+      Fine:
+        type: object
+        properties:
+          id: { type: integer }
+          loan_id: { type: integer }
+          amount: { type: number, format: float }
+          reason: { type: string }
+          status: { $ref: './common.yaml#/components/schemas/FineStatus' }
+          created_at: { type: string, format: date-time }
