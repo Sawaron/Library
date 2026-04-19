@@ -1,0 +1,24 @@
+openapi: 3.0.3
+info:
+  title: Reservation API
+  version: 1.0.0
+paths:
+  /reservations:
+    get: { summary: Список бронирований, responses: { '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Reservation' } } } } } } }
+    post: { summary: Создать бронирование, requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Reservation' } } } }, responses: { '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/Reservation' } } } } } }
+  /reservations/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ]
+    get: { summary: Получить бронирование, responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Reservation' } } } } } }
+    put: { summary: Обновить бронирование, requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Reservation' } } } }, responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Reservation' } } } } } }
+    delete: { summary: Удалить бронирование, responses: { '204': { description: No Content } } }
+
+components:
+  schemas:
+    Reservation:
+      type: object
+      properties:
+        id: { type: integer }
+        book_id: { type: integer }
+        user_id: { type: integer }
+        reservation_date: { type: string, format: date }
+        status: { $ref: './common.yaml#/components/schemas/ReservationStatus' }
