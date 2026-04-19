@@ -1,6 +1,7 @@
 package com.codeandpray.library.controller;
 
 import com.codeandpray.library.dto.CreateBookRequest;
+import com.codeandpray.library.dto.UpdateBookRequest;
 import com.codeandpray.library.entity.Book;
 import com.codeandpray.library.enums.BookStatus;
 import com.codeandpray.library.mapper.BookMapper;
@@ -26,7 +27,6 @@ public class BookController {
 
     @GetMapping
     public Object searchBooks(
-            @RequestParam(required = false) Long id,
             @RequestParam(required = false) String title,
             @RequestParam(required = false) String author,
             @RequestParam(required = false) String genre,
@@ -37,10 +37,6 @@ public class BookController {
             @RequestHeader(value = "Role", required = false) String role
     ) {
 
-        if (id != null) {
-            checkLibrarian(role);
-            return BookMapper.toResponse(bookService.getById(id));
-        }
 
         Page<Book> books = bookService.getBooks(
                 title, author, genre, isbn, status, page, size
@@ -67,11 +63,11 @@ public class BookController {
 
     @PutMapping("/{id}")
     public Book update(@PathVariable Long id,
-                       @RequestBody Book book,
+                       @RequestBody UpdateBookRequest request,
                        @RequestHeader(value = "Role", required = false) String role) {
 
         checkLibrarian(role);
-        return bookService.updateById(id, book);
+        return bookService.updateById(id, request);
     }
 
     @DeleteMapping("/{id}")

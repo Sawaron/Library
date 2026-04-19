@@ -1,6 +1,7 @@
 package com.codeandpray.library.service;
 
 import com.codeandpray.library.dto.CreateBookRequest;
+import com.codeandpray.library.dto.UpdateBookRequest;
 import com.codeandpray.library.entity.Author;
 import com.codeandpray.library.entity.Book;
 import com.codeandpray.library.enums.BookStatus;
@@ -51,11 +52,17 @@ public class BookService {
         return bookRepository.save(book);
     }
 
-    public Book updateById(Long id, Book updatedBook) {
+    public Book updateById(Long id, UpdateBookRequest dto) {
 
         Book book = getById(id);
 
-        applyUpdates(book, updatedBook);
+        BookMapper.updateEntity(book, dto);
+
+        if (dto.getAuthorId() != null) {
+            Author author = authorRepo.findById(dto.getAuthorId())
+                    .orElseThrow(() -> new RuntimeException("Author not found"));
+            book.setBookAuthor(author);
+        }
 
         return bookRepository.save(book);
     }

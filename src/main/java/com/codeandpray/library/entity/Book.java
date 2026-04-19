@@ -53,9 +53,10 @@ public class Book {
     @Column(unique = true, nullable = false)
     private String isbn;
 
+    private int count;
+
     @Column(nullable = false, name = "book_genre")
     private String bookGenre;
-
 
     @ManyToOne
     @JoinColumn(name = "author_id")
