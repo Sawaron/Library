@@ -45,4 +45,6 @@ public class Book {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    private int count;
 }
