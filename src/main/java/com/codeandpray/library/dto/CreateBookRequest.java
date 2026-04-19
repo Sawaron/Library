@@ -9,6 +9,9 @@ public class CreateBookRequest {
     private String genre;
     private String isbn;
     private String summary;
+    private String language;
+    private int pageCount;
+    private int count;
 
 
 }

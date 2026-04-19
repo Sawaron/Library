@@ -4,10 +4,12 @@ import com.codeandpray.library.enums.AgeCategory;
 import com.codeandpray.library.enums.BookStatus;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Entity
 @Getter
@@ -55,12 +57,21 @@ public class Book {
 
     private int count;
 
-    @Column(nullable = false, name = "book_genre")
-    private String bookGenre;
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "book_genre",
+            joinColumns = @JoinColumn(name = "book_id"),
+            inverseJoinColumns = @JoinColumn(name = "genre_id")
+    )
+    private Set<Genre> genres = new HashSet<>();
 
-    @ManyToOne
-    @JoinColumn(name = "author_id")
-    private Author bookAuthor;
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "book_author",
+            joinColumns = @JoinColumn(name = "book_id"),
+            inverseJoinColumns = @JoinColumn(name = "author_id")
+    )
+    private Set<Author> authors = new HashSet<>();
 
 
     @Enumerated(EnumType.STRING)

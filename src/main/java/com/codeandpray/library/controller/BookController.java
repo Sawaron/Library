@@ -1,5 +1,6 @@
 package com.codeandpray.library.controller;
 
+import com.codeandpray.library.dto.BookResponse;
 import com.codeandpray.library.dto.CreateBookRequest;
 import com.codeandpray.library.dto.UpdateBookRequest;
 import com.codeandpray.library.entity.Book;
@@ -19,6 +20,7 @@ public class BookController {
         this.bookService = bookService;
     }
 
+    // 🔐 проверка роли
     private void checkLibrarian(String role) {
         if (role == null || !role.equals("LIBRARIAN")) {
             throw new RuntimeException("Access denied");
@@ -26,17 +28,15 @@ public class BookController {
     }
 
     @GetMapping
-    public Object searchBooks(
+    public Page<BookResponse> searchBooks(
             @RequestParam(required = false) String title,
             @RequestParam(required = false) String author,
             @RequestParam(required = false) String genre,
             @RequestParam(required = false) String isbn,
             @RequestParam(required = false) BookStatus status,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
-            @RequestHeader(value = "Role", required = false) String role
+            @RequestParam(defaultValue = "20") int size
     ) {
-
 
         Page<Book> books = bookService.getBooks(
                 title, author, genre, isbn, status, page, size
@@ -46,28 +46,28 @@ public class BookController {
     }
 
     @GetMapping("/{id}")
-    public Book getById(@PathVariable Long id,
-                        @RequestHeader(value = "Role", required = false) String role) {
+    public BookResponse getById(@PathVariable Long id,
+                                @RequestHeader(value = "Role", required = false) String role) {
 
         checkLibrarian(role);
-        return bookService.getById(id);
+        return BookMapper.toResponse(bookService.getById(id));
     }
 
     @PostMapping
-    public Book create(@RequestBody CreateBookRequest request,
-                       @RequestHeader(value = "Role", required = false) String role) {
+    public BookResponse create(@RequestBody CreateBookRequest request,
+                               @RequestHeader(value = "Role", required = false) String role) {
 
         checkLibrarian(role);
-        return bookService.create(request);
+        return BookMapper.toResponse(bookService.create(request));
     }
 
     @PutMapping("/{id}")
-    public Book update(@PathVariable Long id,
-                       @RequestBody UpdateBookRequest request,
-                       @RequestHeader(value = "Role", required = false) String role) {
+    public BookResponse update(@PathVariable Long id,
+                               @RequestBody UpdateBookRequest request,
+                               @RequestHeader(value = "Role", required = false) String role) {
 
         checkLibrarian(role);
-        return bookService.updateById(id, request);
+        return BookMapper.toResponse(bookService.updateById(id, request));
     }
 
     @DeleteMapping("/{id}")

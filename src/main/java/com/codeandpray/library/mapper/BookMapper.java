@@ -13,6 +13,9 @@ public class BookMapper {
                 .bookGenre(dto.getGenre())
                 .isbn(dto.getIsbn())
                 .description(dto.getSummary())
+                .language(dto.getLanguage())
+                .pageCount(dto.getPageCount())
+                .count(dto.getCount())
                 .build();
     }
 
