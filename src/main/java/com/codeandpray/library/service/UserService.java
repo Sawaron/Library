@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -28,6 +29,8 @@ public class UserService {
                 .lastname(user.getLastname())
                 .email(user.getEmail())
                 .phone(user.getPhone())
+                .registrationDate(user.getRegistrationDate())
+                .role(user.getRole())
                 .build();
     }
 
@@ -38,6 +41,8 @@ public class UserService {
                 .email(request.getEmail())
                 .phone(request.getPhone())
                 .password(request.getPassword())
+                .registrationDate(LocalDate.now())
+                .role("READER")
                 .build();
     }
 
