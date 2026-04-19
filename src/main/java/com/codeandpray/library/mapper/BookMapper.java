@@ -1,7 +1,7 @@
 package com.codeandpray.library.mapper;
 
 import com.codeandpray.library.dto.*;
-import com.codeandpray.library.entity.*;
+import com.codeandpray.library.entity.Book;
 import com.codeandpray.library.enums.BookStatus;
 
 public class BookMapper {
