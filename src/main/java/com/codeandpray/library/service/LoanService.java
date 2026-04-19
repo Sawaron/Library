@@ -5,7 +5,6 @@ import com.codeandpray.library.dto.LoanResponse;
 import com.codeandpray.library.entity.Book;
 import com.codeandpray.library.entity.User;
 import com.codeandpray.library.repo.BookRepo;
-import com.codeandpray.library.repo.ReservationRepo;
 import com.codeandpray.library.repo.UserRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,7 +23,7 @@ public class LoanService {
     private final LoanRepo loanRepository;
     private final BookRepo bookRepository;
     private final UserRepo userRepository;
-    private final ReservationRepo reservationRepository;
+
 
     public LoanResponse createLoan(LoanRequest request) {
         Book book = bookRepository.findById(request.getBookId())
@@ -105,8 +104,6 @@ public class LoanService {
             loan.setReturnDate(request.getReturnDate());
         }
 
-        // Если нужно обновить что-то еще (например, статус вручную)
-        // Здесь можно добавить проверку прав (только библиотекарь)
 
         return mapToResponse(loanRepository.save(loan));
     }

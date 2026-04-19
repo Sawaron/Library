@@ -20,7 +20,6 @@ public class LoanController {
 
     @PostMapping
     public ResponseEntity<LoanResponse> createLoan(@Valid @RequestBody LoanRequest request) {
-        // Возвращаем 201 Created по просьбе аналитиков
         return ResponseEntity.status(HttpStatus.CREATED).body(loanService.createLoan(request));
     }
 

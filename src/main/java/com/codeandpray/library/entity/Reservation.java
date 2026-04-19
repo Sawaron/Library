@@ -29,7 +29,7 @@ public class Reservation {
     private Book book;
 
     @ManyToOne
-    @JoinColumn(name = "reader_id")
+    @JoinColumn(name = "user_id")
     private User user;
 
     private LocalDateTime reservationDate;
