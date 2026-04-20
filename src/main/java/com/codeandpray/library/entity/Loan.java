@@ -1,5 +1,6 @@
 package com.codeandpray.library.entity;
 
+import com.codeandpray.library.enums.LoanStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;
@@ -28,5 +29,5 @@ public class Loan {
     private LocalDate loanDate;
     private LocalDate returnDate;
     private LocalDate actualReturnDate;
-    private String status;
+    private LoanStatus status;
 }
