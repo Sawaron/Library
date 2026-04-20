@@ -1,5 +1,6 @@
 package com.codeandpray.library.controller;
 
+import com.codeandpray.library.dto.PageResponse;
 import com.codeandpray.library.dto.ReservationRequest;
 import com.codeandpray.library.dto.ReservationResponse;
 import com.codeandpray.library.service.ReservationService;
@@ -7,8 +8,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/reservations")
@@ -24,8 +23,11 @@ public class ReservationController {
     }
 
     @GetMapping
-    public List<ReservationResponse> getAll() {
-        return reservationService.getAll();
+    public PageResponse<ReservationResponse> getAll(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        return reservationService.getAll(page, size);
     }
 
     @GetMapping("/{id}")
