@@ -20,6 +20,4 @@ public class LoanRequest {
     @NotNull(message = "Reader ID is required")
     private Long readerId;
 
-    @Future(message = "Return date must be in the future")
-    private LocalDate returnDate;
 }

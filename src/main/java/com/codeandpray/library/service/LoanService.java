@@ -2,14 +2,14 @@ package com.codeandpray.library.service;
 
 import com.codeandpray.library.dto.LoanRequest;
 import com.codeandpray.library.dto.LoanResponse;
-import com.codeandpray.library.dto.PageResponse; // Наша обертка
+import com.codeandpray.library.dto.PageResponse;
 import com.codeandpray.library.entity.Book;
-import com.codeandpray.library.entity.User;
 import com.codeandpray.library.entity.Loan;
+import com.codeandpray.library.entity.User;
 import com.codeandpray.library.mapper.LoanMapper;
 import com.codeandpray.library.repo.BookRepo;
-import com.codeandpray.library.repo.UserRepo;
 import com.codeandpray.library.repo.LoanRepo;
+import com.codeandpray.library.repo.UserRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -40,16 +40,31 @@ public class LoanService {
         User user = userRepository.findById(request.getReaderId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        // Автоматически +14 дней
+        LocalDate autoReturnDate = LocalDate.now().plusDays(14);
+
         Loan loan = Loan.builder()
                 .book(book)
                 .user(user)
                 .loanDate(LocalDate.now())
-                .returnDate(request.getReturnDate())
+                .returnDate(autoReturnDate)
                 .status("ACTIVE")
                 .build();
 
         book.setCount(book.getCount() - 1);
         bookRepository.save(book);
+
+        // Убедись, что save возвращает ОДИН аргумент в toResponse
+        Loan savedLoan = loanRepository.save(loan);
+        return loanMapper.toResponse(savedLoan);
+    }
+
+    @Transactional
+    public LoanResponse updateLoan(Long id, LoanRequest request) {
+        Loan loan = loanRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Loan not found"));
+
+        // Здесь можно добавить логику обновления, если в Request появились новые поля
 
         return loanMapper.toResponse(loanRepository.save(loan));
     }
@@ -57,9 +72,7 @@ public class LoanService {
     @Transactional(readOnly = true)
     public PageResponse<LoanResponse> getAllLoans(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<Loan> loanPage = loanRepository.findAll(pageable);
-
-        return PageResponse.of(loanPage.map(loanMapper::toResponse));
+        return PageResponse.of(loanRepository.findAll(pageable).map(loanMapper::toResponse));
     }
 
     @Transactional(readOnly = true)
@@ -74,6 +87,10 @@ public class LoanService {
         Loan loan = loanRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Loan not found"));
 
+        if ("RETURNED".equals(loan.getStatus())) {
+            throw new RuntimeException("Book is already returned");
+        }
+
         loan.setActualReturnDate(LocalDate.now());
         loan.setStatus("RETURNED");
 
@@ -87,23 +104,8 @@ public class LoanService {
     @Transactional(readOnly = true)
     public PageResponse<LoanResponse> getLoansByReader(Long readerId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-
-        // Передаем пагинацию в репозиторий
         Page<Loan> loanPage = loanRepository.findByUserId(readerId, pageable);
-
         return PageResponse.of(loanPage.map(loanMapper::toResponse));
-    }
-
-    @Transactional
-    public LoanResponse updateLoan(Long id, LoanRequest request) {
-        Loan loan = loanRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Loan not found"));
-
-        if (request.getReturnDate() != null) {
-            loan.setReturnDate(request.getReturnDate());
-        }
-
-        return loanMapper.toResponse(loanRepository.save(loan));
     }
 
     @Transactional
@@ -123,5 +125,4 @@ public class LoanService {
 
         loanRepository.save(loan);
     }
-
 }
