@@ -2,6 +2,7 @@ package com.codeandpray.library.mapper;
 
 import com.codeandpray.library.dto.CreateEditionRequest;
 import com.codeandpray.library.dto.EditionResponse;
+import com.codeandpray.library.dto.UpdateEditionRequest;
 import com.codeandpray.library.entity.Book;
 import com.codeandpray.library.entity.Edition;
 import org.springframework.data.domain.Page;
@@ -16,6 +17,15 @@ public class EditionMapper {
                 .editionNumber(dto.getEditionNumber())
                 .publisher(dto.getPublisher())
                 .build();
+    }
+
+    public void updateEntity(Edition edition, UpdateEditionRequest dto) {
+        if (dto.getEditionNumber() != null) {
+            edition.setEditionNumber(dto.getEditionNumber());
+        }
+        if (dto.getPublisher() != null) {
+            edition.setPublisher(dto.getPublisher());
+        }
     }
 
     public EditionResponse toResponse(Edition entity) {

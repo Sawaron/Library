@@ -41,8 +41,7 @@ public class EditionService {
     @Transactional
     public Edition update(Long id, UpdateEditionRequest dto) {
         Edition edition = getById(id);
-        if (dto.getEditionNumber() != null) edition.setEditionNumber(dto.getEditionNumber());
-        if (dto.getPublisher() != null) edition.setPublisher(dto.getPublisher());
+        editionMapper.updateEntity(edition, dto);
         return editionRepo.save(edition);
     }
 
