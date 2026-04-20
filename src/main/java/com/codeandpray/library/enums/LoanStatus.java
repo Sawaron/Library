@@ -1,8 +1,7 @@
 package com.codeandpray.library.enums;
 
 public enum LoanStatus {
-    ACTIVE,
+    ISSUED,
     OVERDUE,
-    RETURNED,
-    CANCELLED
+    RETURNED
 }

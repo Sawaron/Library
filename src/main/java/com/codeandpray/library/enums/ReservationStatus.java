@@ -1,8 +1,8 @@
 package com.codeandpray.library.enums;
 
 public enum ReservationStatus {
-    PENDING,
-    COMPLETED,
+    ACTIVE,
+    FULFILLED,
     CANCELLED,
     EXPIRED,
 }
