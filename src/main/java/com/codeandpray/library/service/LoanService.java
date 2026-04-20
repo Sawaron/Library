@@ -6,6 +6,7 @@ import com.codeandpray.library.dto.PageResponse;
 import com.codeandpray.library.entity.Book;
 import com.codeandpray.library.entity.Loan;
 import com.codeandpray.library.entity.User;
+import com.codeandpray.library.enums.LoanStatus;
 import com.codeandpray.library.mapper.LoanMapper;
 import com.codeandpray.library.repo.BookRepo;
 import com.codeandpray.library.repo.LoanRepo;
@@ -48,7 +49,7 @@ public class LoanService {
                 .user(user)
                 .loanDate(LocalDate.now())
                 .returnDate(autoReturnDate)
-                .status("ACTIVE")
+                .status(LoanStatus.ISSUED)
                 .build();
 
         book.setCount(book.getCount() - 1);
@@ -92,7 +93,7 @@ public class LoanService {
         }
 
         loan.setActualReturnDate(LocalDate.now());
-        loan.setStatus("RETURNED");
+        loan.setStatus(LoanStatus.RETURNED);
 
         Book book = loan.getBook();
         book.setCount(book.getCount() + 1);
@@ -117,7 +118,7 @@ public class LoanService {
             throw new RuntimeException("Loan is already cancelled");
         }
 
-        loan.setStatus("CANCELLED");
+        loan.setStatus(LoanStatus.RETURNED);
 
         Book book = loan.getBook();
         book.setCount(book.getCount() + 1);
