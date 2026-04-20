@@ -1,0 +1,111 @@
+openapi: 3.0.3
+info:
+  title: Fine API
+  version: 1.0.0
+
+paths:
+  /fines:
+    get:
+      summary: Список штрафов
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FineResponse'
+
+    post:
+      summary: Создать штраф
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FineRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FineResponse'
+
+  /fines/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+
+    get:
+      summary: Получить штраф
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FineResponse'
+
+    put:
+      summary: Обновить штраф
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FineRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FineResponse'
+
+    delete:
+      summary: Удалить штраф
+      responses:
+        '204':
+          description: No Content
+
+components:
+  schemas:
+
+    FineRequest:
+      type: object
+      required:
+        - loanId
+        - amount
+      properties:
+        loanId:
+          type: integer
+        amount:
+          type: number
+          format: double
+        reason:
+          type: string
+        status:
+          $ref: './common.yaml#/components/schemas/FineStatus'
+
+    FineResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        loanId:
+          type: integer
+        amount:
+          type: number
+          format: double
+        reason:
+          type: string
+        status:
+          $ref: './common.yaml#/components/schemas/FineStatus'
+        createdAt:
+          type: string
+          format: date-time

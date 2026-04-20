@@ -52,6 +52,6 @@ CREATE TABLE reservation (
                                      reader_id BIGINT NOT NULL,
                                      reservation_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                                      status VARCHAR(50) NOT NULL,
-                                     CONSTRAINT fk_reservation_book FOREIGN KEY (book_id) REFERENCES library.book(id),
-                                     CONSTRAINT fk_reservation_reader FOREIGN KEY (reader_id) REFERENCES library.user(reader_id)
+                                     CONSTRAINT fk_reservation_book FOREIGN KEY (book_id) REFERENCES public.book(id),
+                                     CONSTRAINT fk_reservation_reader FOREIGN KEY (reader_id) REFERENCES public.user(reader_id)
 );
