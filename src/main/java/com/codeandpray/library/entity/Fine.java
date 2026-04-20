@@ -1,5 +1,6 @@
 package com.codeandpray.library.entity;
 
+import com.codeandpray.library.enums.FineStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -27,8 +28,9 @@ public class Fine {
     @Column(name = "fine_reason")
     private String reason;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "fine_status")
-    private String status;
+    private FineStatus status;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

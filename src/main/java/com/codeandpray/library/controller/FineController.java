@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/fines")
+@RequestMapping("/api/v1/fines") // Переносим версию сюда для всех методов сразу
 @RequiredArgsConstructor
 public class FineController {
 
@@ -27,17 +27,17 @@ public class FineController {
         return new ResponseEntity<>(fineService.save(dto), HttpStatus.CREATED);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{id}") // Убираем лишние префиксы, оставляем только переменную пути
     public ResponseEntity<FineResponse> getFineById(@PathVariable Long id) {
         return ResponseEntity.ok(fineService.findById(id));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/{id}") // Путь теперь будет /api/v1/fines/{id}
     public ResponseEntity<FineResponse> updateFine(@PathVariable Long id, @RequestBody FineRequest dto) {
         return ResponseEntity.ok(fineService.update(id, dto));
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{id}") // Соответствует OpenAPI спецификации
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteFine(@PathVariable Long id) {
         fineService.deleteById(id);

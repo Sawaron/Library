@@ -3,6 +3,7 @@ package com.codeandpray.library.service;
 import com.codeandpray.library.dto.FineRequest;
 import com.codeandpray.library.dto.FineResponse;
 import com.codeandpray.library.entity.Fine;
+import com.codeandpray.library.enums.FineStatus; // Импортируем Enum
 import com.codeandpray.library.mapper.FineMapper;
 import com.codeandpray.library.repo.FineRepo;
 import lombok.RequiredArgsConstructor;
@@ -16,20 +17,15 @@ import java.util.List;
 @RequiredArgsConstructor
 public class FineService {
 
-    private final FineRepo fineRepo; // Исправлено имя переменной (с маленькой буквы)
+    private final FineRepo fineRepo;
 
     public List<FineResponse> findAll() {
-        return fineRepo.findAll() // Теперь методы доступны благодаря JpaRepository
-                .stream()
-                .map(FineMapper::toResponse)
-                .toList();
+        return fineRepo.findAll().stream().map(FineMapper::toResponse).toList();
     }
 
     public FineResponse findById(Long id) {
-        return FineMapper.toResponse(
-                fineRepo.findById(id)
-                        .orElseThrow(() -> new RuntimeException("Штраф не найден"))
-        );
+        return FineMapper.toResponse(fineRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Штраф не найден")));
     }
 
     @Transactional
@@ -38,7 +34,7 @@ public class FineService {
         fine.setAmount(dto.getAmount());
         fine.setReason(dto.getReason());
         fine.setCreatedAt(LocalDateTime.now());
-        fine.setStatus("UNPAID");
+        fine.setStatus(FineStatus.UNPAID); // Используем Enum вместо строки
 
         return FineMapper.toResponse(fineRepo.save(fine));
     }
@@ -50,15 +46,14 @@ public class FineService {
 
         if (dto.getAmount() != null) existingFine.setAmount(dto.getAmount());
         if (dto.getReason() != null) existingFine.setReason(dto.getReason());
-        if (dto.getStatus() != null) existingFine.setStatus(dto.getStatus());
+        if (dto.getStatus() != null) {
+            existingFine.setStatus(FineStatus.valueOf(dto.getStatus())); // Конвертируем строку из DTO в Enum
+        }
 
         return FineMapper.toResponse(fineRepo.save(existingFine));
     }
 
     public void deleteById(Long id) {
-        if (!fineRepo.existsById(id)) {
-            throw new RuntimeException("Штраф не найден");
-        }
         fineRepo.deleteById(id);
     }
 }
