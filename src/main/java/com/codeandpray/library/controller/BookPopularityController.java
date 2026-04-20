@@ -5,6 +5,10 @@ import com.codeandpray.library.dto.BookPopularityResponse;
 import com.codeandpray.library.enums.BookPopularityPeriod;
 import com.codeandpray.library.service.BookPopularityService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,10 +22,69 @@ public class BookPopularityController {
 
     private final BookPopularityService bookPopularityService;
 
-    @GetMapping
+
+    @GetMapping("/all")
     public List<BookPopularityResponse> findAll() {
         return bookPopularityService.findAll();
     }
+
+    @GetMapping("/book/{bookId}/all")
+    public List<BookPopularityResponse> findByBookId(@PathVariable Long bookId) {
+        return bookPopularityService.findByBookId(bookId);
+    }
+
+    @GetMapping("/period/{period}/all")
+    public List<BookPopularityResponse> findByPeriod(@PathVariable BookPopularityPeriod period) {
+        return bookPopularityService.findByPeriod(period);
+    }
+
+
+    @GetMapping
+    public Page<BookPopularityResponse> findAllPaginated(
+            @PageableDefault(size = 20, sort = "readCount", direction = Sort.Direction.DESC)
+            Pageable pageable) {
+        return bookPopularityService.findAllPaginated(pageable);
+    }
+
+    @GetMapping("/book/{bookId}")
+    public Page<BookPopularityResponse> findByBookIdPaginated(
+            @PathVariable Long bookId,
+            @PageableDefault(size = 20, sort = "period", direction = Sort.Direction.ASC)
+            Pageable pageable) {
+        return bookPopularityService.findByBookIdPaginated(bookId, pageable);
+    }
+
+    @GetMapping("/period/{period}")
+    public Page<BookPopularityResponse> findByPeriodPaginated(
+            @PathVariable BookPopularityPeriod period,
+            @PageableDefault(size = 20, sort = "readCount", direction = Sort.Direction.DESC)
+            Pageable pageable) {
+        return bookPopularityService.findByPeriodPaginated(period, pageable);
+    }
+
+    @GetMapping("/popular")
+    public Page<BookPopularityResponse> findPopularBooks(
+            @RequestParam(defaultValue = "100") Integer minReadCount,
+            @PageableDefault(size = 20, sort = "readCount", direction = Sort.Direction.DESC)
+            Pageable pageable) {
+        return bookPopularityService.findPopularBooks(minReadCount, pageable);
+    }
+
+    @GetMapping("/period/{period}/popular")
+    public Page<BookPopularityResponse> findPopularByPeriod(
+            @PathVariable BookPopularityPeriod period,
+            @RequestParam(defaultValue = "100") Integer minReadCount,
+            @PageableDefault(size = 20, sort = "readCount", direction = Sort.Direction.DESC)
+            Pageable pageable) {
+        return bookPopularityService.findPopularByPeriod(period, minReadCount, pageable);
+    }
+
+    @GetMapping("/most-popular")
+    public Page<BookPopularityResponse> findMostPopular(
+            @PageableDefault(size = 10) Pageable pageable) {
+        return bookPopularityService.findMostPopular(pageable);
+    }
+
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -34,16 +97,6 @@ public class BookPopularityController {
         return bookPopularityService.findById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
-    }
-
-    @GetMapping("/book/{bookId}")
-    public List<BookPopularityResponse> findByBookId(@PathVariable Long bookId) {
-        return bookPopularityService.findByBookId(bookId);
-    }
-
-    @GetMapping("/period/{period}")
-    public List<BookPopularityResponse> findByPeriod(@PathVariable BookPopularityPeriod period) {
-        return bookPopularityService.findByPeriod(period);
     }
 
     @PutMapping("/{id}")
@@ -62,7 +115,8 @@ public class BookPopularityController {
 
     @PostMapping("/book/{bookId}/read")
     @ResponseStatus(HttpStatus.OK)
-    public void incrementReadCount(@PathVariable Long bookId, @RequestParam BookPopularityPeriod period) {
+    public void incrementReadCount(@PathVariable Long bookId,
+                                   @RequestParam BookPopularityPeriod period) {
         bookPopularityService.incrementReadCount(bookId, period);
     }
 }

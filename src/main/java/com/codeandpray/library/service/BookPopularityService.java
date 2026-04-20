@@ -4,105 +4,114 @@ import com.codeandpray.library.dto.BookPopularityRequest;
 import com.codeandpray.library.dto.BookPopularityResponse;
 import com.codeandpray.library.entity.BookPopularity;
 import com.codeandpray.library.enums.BookPopularityPeriod;
+import com.codeandpray.library.mapper.BookPopularityMapper;
 import com.codeandpray.library.repo.BookPopularityRepo;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class BookPopularityService {
 
     private final BookPopularityRepo bookPopularityRepo;
+    private final BookPopularityMapper bookPopularityMapper;
 
-    private BookPopularityResponse mapToResponse(BookPopularity popularity) {
-        return BookPopularityResponse.builder()
-                .id(popularity.getId())
-                .bookId(popularity.getBookId())
-                .readCount(popularity.getReadCount())
-                .period(popularity.getPeriod())
-                .calculatedAt(popularity.getCalculatedAt())
-                .build();
-    }
-
-    private BookPopularity mapToEntity(BookPopularityRequest request) {
-        return BookPopularity.builder()
-                .bookId(request.getBookId())
-                .readCount(request.getReadCount())
-                .period(request.getPeriod())
-                .calculatedAt(LocalDateTime.now())
-                .build();
-    }
 
     @Transactional(readOnly = true)
     public List<BookPopularityResponse> findAll() {
-        return bookPopularityRepo.findAll()
-                .stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+        return bookPopularityMapper.toResponseList(bookPopularityRepo.findAll());
     }
+
+    @Transactional(readOnly = true)
+    public List<BookPopularityResponse> findByBookId(Long bookId) {
+        return bookPopularityMapper.toResponseList(bookPopularityRepo.findByBookId(bookId));
+    }
+
+    @Transactional(readOnly = true)
+    public List<BookPopularityResponse> findByPeriod(BookPopularityPeriod period) {
+        return bookPopularityMapper.toResponseList(bookPopularityRepo.findByPeriod(period));
+    }
+
+
+    @Transactional(readOnly = true)
+    public Page<BookPopularityResponse> findAllPaginated(Pageable pageable) {
+        return bookPopularityRepo.findAll(pageable)
+                .map(bookPopularityMapper::toResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<BookPopularityResponse> findByBookIdPaginated(Long bookId, Pageable pageable) {
+        return bookPopularityRepo.findByBookId(bookId, pageable)
+                .map(bookPopularityMapper::toResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<BookPopularityResponse> findByPeriodPaginated(BookPopularityPeriod period, Pageable pageable) {
+        return bookPopularityRepo.findByPeriod(period, pageable)
+                .map(bookPopularityMapper::toResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<BookPopularityResponse> findPopularBooks(Integer minReadCount, Pageable pageable) {
+        return bookPopularityRepo.findByReadCountGreaterThanEqual(minReadCount, pageable)
+                .map(bookPopularityMapper::toResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<BookPopularityResponse> findPopularByPeriod(BookPopularityPeriod period,
+                                                            Integer minReadCount,
+                                                            Pageable pageable) {
+        return bookPopularityRepo.findPopularByPeriod(period, minReadCount, pageable)
+                .map(bookPopularityMapper::toResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<BookPopularityResponse> findMostPopular(Pageable pageable) {
+        return bookPopularityRepo.findMostPopular(pageable)
+                .map(bookPopularityMapper::toResponse);
+    }
+
 
     @Transactional
     public BookPopularityResponse save(BookPopularityRequest request) {
-        // Проверяем, есть ли уже запись для этой книги и периода
         Optional<BookPopularity> existingPopularity = bookPopularityRepo.findByBookIdAndPeriod(
                 request.getBookId(),
                 request.getPeriod()
         );
 
         if (existingPopularity.isPresent()) {
-            // Если запись есть - обновляем счётчик и дату
             BookPopularity popularity = existingPopularity.get();
             popularity.setReadCount(request.getReadCount());
             popularity.setCalculatedAt(LocalDateTime.now());
             BookPopularity savedPopularity = bookPopularityRepo.save(popularity);
-            return mapToResponse(savedPopularity);
+            return bookPopularityMapper.toResponse(savedPopularity);
         }
 
-        // Иначе создаём новую
-        BookPopularity popularity = mapToEntity(request);
+        BookPopularity popularity = bookPopularityMapper.toEntity(request);
         BookPopularity savedPopularity = bookPopularityRepo.save(popularity);
-        return mapToResponse(savedPopularity);
+        return bookPopularityMapper.toResponse(savedPopularity);
     }
 
     @Transactional(readOnly = true)
     public Optional<BookPopularityResponse> findById(Long id) {
         return bookPopularityRepo.findById(id)
-                .map(this::mapToResponse);
-    }
-
-    @Transactional(readOnly = true)
-    public List<BookPopularityResponse> findByBookId(Long bookId) {
-        return bookPopularityRepo.findByBookId(bookId)
-                .stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
-    }
-
-    @Transactional(readOnly = true)
-    public List<BookPopularityResponse> findByPeriod(BookPopularityPeriod period) {
-        return bookPopularityRepo.findByPeriod(period)
-                .stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+                .map(bookPopularityMapper::toResponse);
     }
 
     @Transactional
     public Optional<BookPopularityResponse> updateById(Long id, BookPopularityRequest updatedRequest) {
         return bookPopularityRepo.findById(id)
                 .map(oldPopularity -> {
-                    oldPopularity.setBookId(updatedRequest.getBookId());
-                    oldPopularity.setReadCount(updatedRequest.getReadCount());
-                    oldPopularity.setPeriod(updatedRequest.getPeriod());
-                    oldPopularity.setCalculatedAt(LocalDateTime.now());
-
+                    bookPopularityMapper.updateEntity(oldPopularity, updatedRequest);
                     BookPopularity savedPopularity = bookPopularityRepo.save(oldPopularity);
-                    return mapToResponse(savedPopularity);
+                    return bookPopularityMapper.toResponse(savedPopularity);
                 });
     }
 
