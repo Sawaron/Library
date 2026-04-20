@@ -1,15 +1,20 @@
 package com.codeandpray.library.service;
 
+import com.codeandpray.library.dto.PageResponse;
+import com.codeandpray.library.dto.ReservationRequest;
 import com.codeandpray.library.dto.ReservationResponse;
 import com.codeandpray.library.entity.Book;
-import com.codeandpray.library.entity.User;
 import com.codeandpray.library.entity.Reservation;
-import com.codeandpray.library.enums.BookStatus;
+import com.codeandpray.library.entity.User;
 import com.codeandpray.library.enums.ReservationStatus;
+import com.codeandpray.library.mapper.ReservationMapper; // Импортируем твой маппер
 import com.codeandpray.library.repo.BookRepo;
 import com.codeandpray.library.repo.ReservationRepo;
 import com.codeandpray.library.repo.UserRepo;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,42 +24,81 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class ReservationService {
 
-    private final ReservationRepo reservationRepo;
-    private final UserRepo userRepo;
-    private final BookRepo bookRepo;
+    private final ReservationRepo reservationRepository;
+    private final BookRepo bookRepository;
+    private final UserRepo userRepository;
+    private final ReservationMapper reservationMapper;
 
     @Transactional
-    public ReservationResponse create(Long bookId, Long userId) {
-
-        Book book = bookRepo.findById(bookId)
+    public ReservationResponse create(ReservationRequest request) {
+        Book book = bookRepository.findById(request.getBookId())
                 .orElseThrow(() -> new RuntimeException("Book not found"));
-        User user = userRepo.findById(userId)
+
+        if (book.getCount() <= 0) {
+            throw new RuntimeException("No copies available for reservation");
+        }
+
+        User user = userRepository.findById(request.getReaderId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-
-        if (book.getStatus() != BookStatus.AVAILABLE) {
-            throw new RuntimeException("Книга уже выдана или забронирована");
-        }
+        book.setCount(book.getCount() - 1);
+        bookRepository.save(book);
 
         Reservation reservation = new Reservation();
         reservation.setBook(book);
         reservation.setUser(user);
         reservation.setReservationDate(LocalDateTime.now());
-        reservation.setStatus(ReservationStatus.PENDING);
+        reservation.setStatus(ReservationStatus.ACTIVE);
+
+        Reservation saved = reservationRepository.save(reservation);
 
 
-        book.setStatus(BookStatus.UNAVAILABLE);
-        bookRepo.save(book);
-
-
-        Reservation saved = reservationRepo.save(reservation);
-
-        return ReservationResponse.builder()
-                .id(saved.getId())
-                .bookTitle(book.getTitle())
-                .readerFullName(user.getFirstname() + " " + user.getLastname())
-                .reservationDate(saved.getReservationDate())
-                .status(saved.getStatus().name())
-                .build();
+        return reservationMapper.toResponse(saved);
     }
+
+    @Transactional(readOnly = true)
+    public PageResponse<ReservationResponse> getAll(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Reservation> reservationPage = reservationRepository.findAll(pageable);
+
+
+        Page<ReservationResponse> responsePage = reservationPage.map(reservationMapper::toResponse);
+        return PageResponse.of(responsePage);
+    }
+
+    @Transactional(readOnly = true)
+    public ReservationResponse getById(Long id) {
+        return reservationRepository.findById(id)
+                .map(reservationMapper::toResponse)
+                .orElseThrow(() -> new RuntimeException("Reservation not found"));
+    }
+
+    @Transactional
+    public ReservationResponse update(Long id, ReservationRequest request) {
+        Reservation res = reservationRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Reservation not found"));
+
+
+        return reservationMapper.toResponse(reservationRepository.save(res));
+    }
+
+    @Transactional
+    public void cancel(Long id) {
+        Reservation res = reservationRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Reservation not found"));
+
+        if (res.getStatus() == ReservationStatus.CANCELLED) {
+            throw new RuntimeException("Already cancelled");
+        }
+
+        res.setStatus(ReservationStatus.CANCELLED);
+
+        Book book = res.getBook();
+        book.setCount(book.getCount() + 1);
+        bookRepository.save(book);
+
+        reservationRepository.save(res);
+    }
+
+
 }

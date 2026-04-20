@@ -1,9 +1,6 @@
 package com.codeandpray.library.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDate;
 
@@ -11,11 +8,12 @@ import java.time.LocalDate;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class UserResponse {
     private Long id;
 
-    private String firstName;
-    private String lastName;
+    private String firstname;
+    private String lastname;
 
     private String email;
     private String phone;

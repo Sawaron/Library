@@ -1,0 +1,27 @@
+openapi: 3.0.3
+info:
+  title: User API
+  version: 1.0.0
+paths:
+  /users:
+    get: { summary: Список пользователей, responses: { '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/User' } } } } } } }
+    post: { summary: Создать пользователя, requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/User' } } } }, responses: { '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/User' } } } } } }
+  /users/{id}:
+    parameters: [ { name: id, in: path, required: true, schema: { type: integer } } ]
+    get: { summary: Получить пользователя, responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/User' } } } } } }
+    put: { summary: Обновить пользователя, requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/User' } } } }, responses: { '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/User' } } } } } }
+    delete: { summary: Удалить пользователя, responses: { '204': { description: No Content } } }
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id: { type: integer }
+        firstName: { type: string }
+        lastName: { type: string }
+        email: { type: string, format: email }
+        phone: { type: string }
+        password: { type: string }
+        registrationDate: { type: string, format: date-time }
+        role: { type: string }

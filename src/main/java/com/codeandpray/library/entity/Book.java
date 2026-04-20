@@ -74,6 +74,8 @@ public class Book {
     private Set<Author> authors = new HashSet<>();
 
 
-    @Enumerated(EnumType.STRING)
-    private BookStatus status;
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
+
+    private int count;
 }

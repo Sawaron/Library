@@ -2,41 +2,61 @@ package com.codeandpray.library.controller;
 
 import com.codeandpray.library.dto.LoanRequest;
 import com.codeandpray.library.dto.LoanResponse;
-import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.*;
+import com.codeandpray.library.dto.PageResponse; // Твой стандарт
 import com.codeandpray.library.service.LoanService;
-
-import java.util.List;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("api/loans")
+@RequestMapping("/api/v1/loans")
 @RequiredArgsConstructor
 public class LoanController {
 
     private final LoanService loanService;
 
     @PostMapping
-    public LoanResponse createLoan(@RequestBody LoanRequest request) {
-        return loanService.createLoan(request);
+    public ResponseEntity<LoanResponse> createLoan(@Valid @RequestBody LoanRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(loanService.createLoan(request));
     }
 
+
     @GetMapping
-    public List<LoanResponse> getAllLoans() {
-        return loanService.getAllLoans();
+    public PageResponse<LoanResponse> getAllLoans(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return loanService.getAllLoans(page, size);
     }
 
     @GetMapping("/{id}")
-    public LoanResponse getLoan(@PathVariable Long id) {
+    public LoanResponse getLoanById(@PathVariable Long id) {
         return loanService.getLoanById(id);
     }
 
-    @PostMapping("/{id}/return")
+    @PutMapping("/{id}")
+    public LoanResponse updateLoan(@PathVariable Long id, @RequestBody LoanRequest request) {
+        return loanService.updateLoan(id, request);
+    }
+
+    @PatchMapping("/{id}/return")
     public LoanResponse returnBook(@PathVariable Long id) {
         return loanService.returnBook(id);
     }
 
+    @PatchMapping("/{id}/cancel")
+    @ResponseStatus(HttpStatus.OK)
+    public void cancelLoan(@PathVariable Long id) {
+        loanService.cancelLoan(id);
+    }
+
+
     @GetMapping("/reader/{readerId}")
-    public List<LoanResponse> getReaderLoans(@PathVariable Long readerId) {
-        return loanService.getLoansByReader(readerId);
+    public PageResponse<LoanResponse> getLoansByReader(
+            @PathVariable Long readerId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return loanService.getLoansByReader(readerId, page, size);
     }
 }
