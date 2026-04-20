@@ -4,13 +4,15 @@ import com.codeandpray.library.dto.*;
 import com.codeandpray.library.entity.*;
 import com.codeandpray.library.enums.BookStatus;
 
+import java.util.Set;
+import java.util.stream.Collectors;
+
 public class BookMapper {
 
-
-    public static Book toEntity(CreateBookRequest dto) {
+    public static Book toEntity(CreateBookRequest dto, Set<Genre> genres) {
         return Book.builder()
                 .title(dto.getTitle())
-                .bookGenre(dto.getGenre())
+                .genres(genres)
                 .isbn(dto.getIsbn())
                 .description(dto.getSummary())
                 .language(dto.getLanguage())
@@ -19,15 +21,26 @@ public class BookMapper {
                 .build();
     }
 
-    public static void updateEntity(Book book, UpdateBookRequest dto) {
+    public static void updateEntity(
+            Book book,
+            UpdateBookRequest dto,
+            Set<Author> authors,
+            Set<Genre> genres) {
 
         if (dto.getTitle() != null) book.setTitle(dto.getTitle());
-        if (dto.getGenre() != null) book.setBookGenre(dto.getGenre());
         if (dto.getIsbn() != null) book.setIsbn(dto.getIsbn());
         if (dto.getSummary() != null) book.setDescription(dto.getSummary());
 
         if (dto.getStatus() != null) {
             book.setStatus(BookStatus.valueOf(dto.getStatus()));
+        }
+
+        if (authors != null) {
+            book.setAuthors(authors);
+        }
+
+        if (genres != null) {
+            book.setGenres(genres);
         }
     }
 
@@ -51,10 +64,20 @@ public class BookMapper {
                                 : null
                 )
                 .isbn(book.getIsbn())
-                .bookGenre(book.getBookGenre())
+
+                .genres(
+                        book.getGenres() != null
+                                ? book.getGenres().stream()
+                                .map(Genre::getName)
+                                .collect(Collectors.joining(", "))
+                                : null
+                )
+
                 .bookAuthor(
-                        book.getBookAuthor() != null
-                                ? book.getBookAuthor().getName()
+                        book.getAuthors() != null && !book.getAuthors().isEmpty()
+                                ? book.getAuthors().stream()
+                                .map(Author::getName)
+                                .collect(Collectors.joining(", "))
                                 : null
                 )
                 .build();

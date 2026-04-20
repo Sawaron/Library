@@ -15,13 +15,19 @@ import java.util.Optional;
 public interface BookRepo extends JpaRepository<Book, Long> {
 
     @Query("""
-        SELECT b FROM Book b
-        WHERE (:title IS NULL OR LOWER(b.title) LIKE LOWER(CONCAT('%', :title, '%')))
-          AND (:author IS NULL OR LOWER(b.bookAuthor.name) LIKE LOWER(CONCAT('%', :author, '%')))
-          AND (:genre IS NULL OR b.bookGenre = :genre)
-          AND (:isbn IS NULL OR b.isbn = :isbn)
-          AND (:status IS NULL OR b.status = :status)
-    """)
+    SELECT b FROM Book b
+    WHERE (:title IS NULL OR LOWER(b.title) LIKE LOWER(CONCAT('%', :title, '%')))
+      AND (:author IS NULL OR EXISTS (
+            SELECT a FROM b.authors a
+            WHERE LOWER(a.name) LIKE LOWER(CONCAT('%', :author, '%'))
+      ))
+      AND (:genre IS NULL OR EXISTS (
+            SELECT g FROM b.genres g
+            WHERE LOWER(g.name) = LOWER(:genre)
+      ))
+      AND (:isbn IS NULL OR b.isbn = :isbn)
+      AND (:status IS NULL OR b.status = :status)
+""")
     Page<Book> findAllByFilters(
             @Param("title") String title,
             @Param("author") String author,

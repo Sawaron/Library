@@ -17,7 +17,7 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString(exclude = "author")
+@ToString(exclude = {"authors", "genres"})
 public class Book {
 
     @Id

@@ -1,9 +1,6 @@
 package com.codeandpray.library.controller;
 
-import com.codeandpray.library.dto.BookResponse;
-import com.codeandpray.library.dto.CreateBookRequest;
-import com.codeandpray.library.dto.UpdateBookRequest;
-import com.codeandpray.library.entity.Book;
+import com.codeandpray.library.dto.*;
 import com.codeandpray.library.enums.BookStatus;
 import com.codeandpray.library.mapper.BookMapper;
 import com.codeandpray.library.service.BookService;
@@ -11,7 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/books")
+@RequestMapping("/api/v1/books")
 public class BookController {
 
     private final BookService bookService;
@@ -20,7 +17,6 @@ public class BookController {
         this.bookService = bookService;
     }
 
-    // 🔐 проверка роли
     private void checkLibrarian(String role) {
         if (role == null || !role.equals("LIBRARIAN")) {
             throw new RuntimeException("Access denied");
@@ -28,7 +24,7 @@ public class BookController {
     }
 
     @GetMapping
-    public Page<BookResponse> searchBooks(
+    public Page<BookResponse> getBooks(
             @RequestParam(required = false) String title,
             @RequestParam(required = false) String author,
             @RequestParam(required = false) String genre,
@@ -37,18 +33,13 @@ public class BookController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
-
-        Page<Book> books = bookService.getBooks(
-                title, author, genre, isbn, status, page, size
-        );
-
-        return books.map(BookMapper::toResponse);
+        return bookService.getBooks(title, author, genre, isbn, status, page, size)
+                .map(BookMapper::toResponse);
     }
 
     @GetMapping("/{id}")
     public BookResponse getById(@PathVariable Long id,
                                 @RequestHeader(value = "Role", required = false) String role) {
-
         checkLibrarian(role);
         return BookMapper.toResponse(bookService.getById(id));
     }
@@ -56,7 +47,6 @@ public class BookController {
     @PostMapping
     public BookResponse create(@RequestBody CreateBookRequest request,
                                @RequestHeader(value = "Role", required = false) String role) {
-
         checkLibrarian(role);
         return BookMapper.toResponse(bookService.create(request));
     }
@@ -65,7 +55,6 @@ public class BookController {
     public BookResponse update(@PathVariable Long id,
                                @RequestBody UpdateBookRequest request,
                                @RequestHeader(value = "Role", required = false) String role) {
-
         checkLibrarian(role);
         return BookMapper.toResponse(bookService.updateById(id, request));
     }
@@ -73,7 +62,6 @@ public class BookController {
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id,
                        @RequestHeader(value = "Role", required = false) String role) {
-
         checkLibrarian(role);
         bookService.deleteById(id);
     }

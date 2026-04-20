@@ -2,11 +2,13 @@ package com.codeandpray.library.dto;
 
 import lombok.Data;
 
+import java.util.Set;
+
 @Data
 public class CreateBookRequest {
     private String title;
-    private Long authorId;
-    private String genre;
+    private Set<Long> authorIds;
+    private Set<Long> genreIds;
     private String isbn;
     private String summary;
     private String language;

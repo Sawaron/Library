@@ -16,7 +16,6 @@ public class BookResponse {
     Integer readingTime;
     String ageCategory;
     String isbn;
-    String bookGenre;
+    String genres;
     String bookAuthor;
-
 }
