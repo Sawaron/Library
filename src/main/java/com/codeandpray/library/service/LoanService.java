@@ -2,19 +2,22 @@ package com.codeandpray.library.service;
 
 import com.codeandpray.library.dto.LoanRequest;
 import com.codeandpray.library.dto.LoanResponse;
+import com.codeandpray.library.dto.PageResponse; // Наша обертка
 import com.codeandpray.library.entity.Book;
 import com.codeandpray.library.entity.User;
+import com.codeandpray.library.entity.Loan;
+import com.codeandpray.library.mapper.LoanMapper;
 import com.codeandpray.library.repo.BookRepo;
 import com.codeandpray.library.repo.UserRepo;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import com.codeandpray.library.entity.Loan;
 import com.codeandpray.library.repo.LoanRepo;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -23,8 +26,9 @@ public class LoanService {
     private final LoanRepo loanRepository;
     private final BookRepo bookRepository;
     private final UserRepo userRepository;
+    private final LoanMapper loanMapper;
 
-
+    @Transactional
     public LoanResponse createLoan(LoanRequest request) {
         Book book = bookRepository.findById(request.getBookId())
                 .orElseThrow(() -> new RuntimeException("Book not found"));
@@ -44,26 +48,28 @@ public class LoanService {
                 .status("ACTIVE")
                 .build();
 
-
         book.setCount(book.getCount() - 1);
         bookRepository.save(book);
 
-        return mapToResponse(loanRepository.save(loan));
+        return loanMapper.toResponse(loanRepository.save(loan));
     }
 
-    public List<LoanResponse> getAllLoans() {
-        return loanRepository.findAll()
-                .stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+    @Transactional(readOnly = true)
+    public PageResponse<LoanResponse> getAllLoans(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Loan> loanPage = loanRepository.findAll(pageable);
+
+        return PageResponse.of(loanPage.map(loanMapper::toResponse));
     }
 
+    @Transactional(readOnly = true)
     public LoanResponse getLoanById(Long id) {
         return loanRepository.findById(id)
-                .map(this::mapToResponse)
+                .map(loanMapper::toResponse)
                 .orElseThrow(() -> new RuntimeException("Loan not found"));
     }
 
+    @Transactional
     public LoanResponse returnBook(Long id) {
         Loan loan = loanRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Loan not found"));
@@ -71,41 +77,33 @@ public class LoanService {
         loan.setActualReturnDate(LocalDate.now());
         loan.setStatus("RETURNED");
 
-        return mapToResponse(loanRepository.save(loan));
+        Book book = loan.getBook();
+        book.setCount(book.getCount() + 1);
+        bookRepository.save(book);
+
+        return loanMapper.toResponse(loanRepository.save(loan));
     }
 
-    public List<LoanResponse> getLoansByReader(Long readerId) {
-        return loanRepository.findByUserId(readerId)
-                .stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+    @Transactional(readOnly = true)
+    public PageResponse<LoanResponse> getLoansByReader(Long readerId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+
+        // Передаем пагинацию в репозиторий
+        Page<Loan> loanPage = loanRepository.findByUserId(readerId, pageable);
+
+        return PageResponse.of(loanPage.map(loanMapper::toResponse));
     }
 
-    private LoanResponse mapToResponse(Loan loan) {
-        return LoanResponse.builder()
-                .id(loan.getId())
-                .bookId(loan.getBook().getId())
-                .bookTitle(loan.getBook().getTitle())
-                .readerId(loan.getUser().getId())
-                .readerName(loan.getUser().getFirstname() + " " + loan.getUser().getLastname())
-                .loanDate(loan.getLoanDate())
-                .returnDate(loan.getReturnDate())
-                .actualReturnDate(loan.getActualReturnDate())
-                .status(loan.getStatus())
-                .build();
-    }
-
+    @Transactional
     public LoanResponse updateLoan(Long id, LoanRequest request) {
         Loan loan = loanRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Loan not found"));
-
 
         if (request.getReturnDate() != null) {
             loan.setReturnDate(request.getReturnDate());
         }
 
-
-        return mapToResponse(loanRepository.save(loan));
+        return loanMapper.toResponse(loanRepository.save(loan));
     }
 
     @Transactional
@@ -125,4 +123,5 @@ public class LoanService {
 
         loanRepository.save(loan);
     }
+
 }
