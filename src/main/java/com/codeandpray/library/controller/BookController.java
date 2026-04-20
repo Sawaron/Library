@@ -7,6 +7,8 @@ import com.codeandpray.library.service.BookService;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
+import com.codeandpray.library.entity.Book;
+
 @RestController
 @RequestMapping("/api/v1/books")
 public class BookController {
@@ -24,7 +26,7 @@ public class BookController {
     }
 
     @GetMapping
-    public Page<BookResponse> getBooks(
+    public PageResponse<BookResponse> getBooks(
             @RequestParam(required = false) String title,
             @RequestParam(required = false) String author,
             @RequestParam(required = false) String genre,
@@ -33,8 +35,8 @@ public class BookController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
-        return bookService.getBooks(title, author, genre, isbn, status, page, size)
-                .map(BookMapper::toResponse);
+        Page<Book> books = bookService.getBooks(title, author, genre, isbn, status, page, size);
+        return BookMapper.toPageResponse(books);
     }
 
     @GetMapping("/{id}")

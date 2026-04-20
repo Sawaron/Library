@@ -3,15 +3,17 @@ package com.codeandpray.library.mapper;
 import com.codeandpray.library.dto.*;
 import com.codeandpray.library.entity.*;
 import com.codeandpray.library.enums.BookStatus;
+import org.springframework.data.domain.Page;
 
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public class BookMapper {
 
-    public static Book toEntity(CreateBookRequest dto, Set<Genre> genres) {
+    public static Book toEntity(CreateBookRequest dto, Set<Author> authors, Set<Genre> genres) {
         return Book.builder()
                 .title(dto.getTitle())
+                .authors(authors)
                 .genres(genres)
                 .isbn(dto.getIsbn())
                 .description(dto.getSummary())
@@ -21,65 +23,35 @@ public class BookMapper {
                 .build();
     }
 
-    public static void updateEntity(
-            Book book,
-            UpdateBookRequest dto,
-            Set<Author> authors,
-            Set<Genre> genres) {
-
+    public static void updateEntity(Book book, UpdateBookRequest dto, Set<Author> authors, Set<Genre> genres) {
         if (dto.getTitle() != null) book.setTitle(dto.getTitle());
         if (dto.getIsbn() != null) book.setIsbn(dto.getIsbn());
         if (dto.getSummary() != null) book.setDescription(dto.getSummary());
-
-        if (dto.getStatus() != null) {
-            book.setStatus(BookStatus.valueOf(dto.getStatus()));
-        }
-
-        if (authors != null) {
-            book.setAuthors(authors);
-        }
-
-        if (genres != null) {
-            book.setGenres(genres);
-        }
+        if (dto.getStatus() != null) book.setStatus(BookStatus.valueOf(dto.getStatus()));
+        if (authors != null) book.setAuthors(authors);
+        if (genres != null) book.setGenres(genres);
     }
 
     public static BookResponse toResponse(Book book) {
         return BookResponse.builder()
                 .title(book.getTitle())
                 .description(book.getDescription())
-                .publishDate(
-                        book.getPublishDate() != null
-                                ? book.getPublishDate().toLocalDate().toString()
-                                : null
-                )
+                .publishDate(book.getPublishDate() != null ? book.getPublishDate().toLocalDate().toString() : null)
                 .pageCount(book.getPageCount())
                 .language(book.getLanguage())
                 .price(book.getPrice())
                 .hasAudiobook(book.isHasAudiobook())
                 .readingTime(book.getReaderTime())
-                .ageCategory(
-                        book.getAgeCategory() != null
-                                ? book.getAgeCategory().getValue()
-                                : null
-                )
+                .ageCategory(book.getAgeCategory() != null ? book.getAgeCategory().getValue() : null)
                 .isbn(book.getIsbn())
-
-                .genres(
-                        book.getGenres() != null
-                                ? book.getGenres().stream()
-                                .map(Genre::getName)
-                                .collect(Collectors.joining(", "))
-                                : null
-                )
-
-                .bookAuthor(
-                        book.getAuthors() != null && !book.getAuthors().isEmpty()
-                                ? book.getAuthors().stream()
-                                .map(Author::getName)
-                                .collect(Collectors.joining(", "))
-                                : null
-                )
+                .genres(book.getGenres() != null ? book.getGenres().stream().map(Genre::getName).collect(Collectors.joining(", ")) : null)
+                .bookAuthor(book.getAuthors() != null && !book.getAuthors().isEmpty() ? book.getAuthors().stream().map(Author::getName).collect(Collectors.joining(", ")) : null)
                 .build();
+    }
+
+
+    public static PageResponse<BookResponse> toPageResponse(Page<Book> bookPage) {
+        Page<BookResponse> responsePage = bookPage.map(BookMapper::toResponse);
+        return PageResponse.of(responsePage);
     }
 }
