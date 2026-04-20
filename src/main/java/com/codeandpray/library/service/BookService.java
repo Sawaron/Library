@@ -18,15 +18,17 @@ public class BookService {
     private final BookRepo bookRepository;
     private final AuthorRepo authorRepo;
     private final GenreRepo genreRepo;
+    private final BookMapper bookMapper;
 
-    public BookService(BookRepo bookRepository,
-                       AuthorRepo authorRepo,
-                       GenreRepo genreRepo) {
+    public BookService(BookRepo bookRepository, AuthorRepo authorRepo,
+                       GenreRepo genreRepo, BookMapper bookMapper) {
         this.bookRepository = bookRepository;
         this.authorRepo = authorRepo;
         this.genreRepo = genreRepo;
+        this.bookMapper = bookMapper;
     }
 
+    @Transactional(readOnly = true)
     public Page<Book> getBooks(String title, String author, String genre,
                                String isbn, BookStatus status,
                                int page, int size) {
@@ -34,6 +36,7 @@ public class BookService {
         return bookRepository.findAllByFilters(title, author, genre, isbn, status, pageable);
     }
 
+    @Transactional(readOnly = true)
     public Book getById(Long id) {
         return bookRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Book not found"));
@@ -44,7 +47,7 @@ public class BookService {
         Set<Author> authors = new HashSet<>(authorRepo.findAllById(dto.getAuthorIds()));
         Set<Genre> genres = new HashSet<>(genreRepo.findAllById(dto.getGenreIds()));
 
-        Book book = BookMapper.toEntity(dto, authors, genres);
+        Book book = bookMapper.toEntity(dto, authors, genres);
         book.setStatus(BookStatus.AVAILABLE);
 
         return bookRepository.save(book);
@@ -62,7 +65,7 @@ public class BookService {
                 ? new HashSet<>(genreRepo.findAllById(dto.getGenreIds()))
                 : null;
 
-        BookMapper.updateEntity(book, dto, authors, genres);
+        bookMapper.updateEntity(book, dto, authors, genres);
 
         return bookRepository.save(book);
     }

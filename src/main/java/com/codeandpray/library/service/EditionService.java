@@ -17,12 +17,15 @@ import org.springframework.transaction.annotation.Transactional;
 public class EditionService {
 
     private final EditionRepo editionRepo;
-    private final BookService bookService; // Используем твой готовый сервис
+    private final BookService bookService;
+    private final EditionMapper editionMapper;
 
+    @Transactional(readOnly = true)
     public Page<Edition> getAll(int page, int size) {
         return editionRepo.findAll(PageRequest.of(page, size));
     }
 
+    @Transactional(readOnly = true)
     public Edition getById(Long id) {
         return editionRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Edition not found"));
@@ -31,7 +34,7 @@ public class EditionService {
     @Transactional
     public Edition create(CreateEditionRequest dto) {
         Book book = bookService.getById(dto.getBookId());
-        Edition edition = EditionMapper.toEntity(dto, book);
+        Edition edition = editionMapper.toEntity(dto, book);
         return editionRepo.save(edition);
     }
 

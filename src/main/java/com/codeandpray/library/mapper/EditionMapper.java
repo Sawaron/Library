@@ -5,10 +5,12 @@ import com.codeandpray.library.dto.EditionResponse;
 import com.codeandpray.library.entity.Book;
 import com.codeandpray.library.entity.Edition;
 import org.springframework.data.domain.Page;
+import org.springframework.stereotype.Component;
 
+@Component
 public class EditionMapper {
 
-    public static Edition toEntity(CreateEditionRequest dto, Book book) {
+    public Edition toEntity(CreateEditionRequest dto, Book book) {
         return Edition.builder()
                 .book(book)
                 .editionNumber(dto.getEditionNumber())
@@ -16,7 +18,7 @@ public class EditionMapper {
                 .build();
     }
 
-    public static EditionResponse toResponse(Edition entity) {
+    public EditionResponse toResponse(Edition entity) {
         return EditionResponse.builder()
                 .id(entity.getId())
                 .bookId(entity.getBook().getId())
@@ -26,7 +28,7 @@ public class EditionMapper {
                 .build();
     }
 
-    public static PageResponse<EditionResponse> toPageResponse(Page<Edition> page) {
-        return PageResponse.of(page.map(EditionMapper::toResponse));
+    public  PageResponse<EditionResponse> toPageResponse(Page<Edition> page) {
+        return PageResponse.of(page.map(this::toResponse));
     }
 }

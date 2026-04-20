@@ -4,13 +4,16 @@ import com.codeandpray.library.dto.*;
 import com.codeandpray.library.entity.*;
 import com.codeandpray.library.enums.BookStatus;
 import org.springframework.data.domain.Page;
+import org.springframework.stereotype.Component;
 
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Component
 public class BookMapper {
 
-    public static Book toEntity(CreateBookRequest dto, Set<Author> authors, Set<Genre> genres) {
+
+    public Book toEntity(CreateBookRequest dto, Set<Author> authors, Set<Genre> genres) {
         return Book.builder()
                 .title(dto.getTitle())
                 .authors(authors)
@@ -23,7 +26,7 @@ public class BookMapper {
                 .build();
     }
 
-    public static void updateEntity(Book book, UpdateBookRequest dto, Set<Author> authors, Set<Genre> genres) {
+    public void updateEntity(Book book, UpdateBookRequest dto, Set<Author> authors, Set<Genre> genres) {
         if (dto.getTitle() != null) book.setTitle(dto.getTitle());
         if (dto.getIsbn() != null) book.setIsbn(dto.getIsbn());
         if (dto.getSummary() != null) book.setDescription(dto.getSummary());
@@ -32,7 +35,7 @@ public class BookMapper {
         if (genres != null) book.setGenres(genres);
     }
 
-    public static BookResponse toResponse(Book book) {
+    public BookResponse toResponse(Book book) {
         return BookResponse.builder()
                 .title(book.getTitle())
                 .description(book.getDescription())
@@ -50,8 +53,8 @@ public class BookMapper {
     }
 
 
-    public static PageResponse<BookResponse> toPageResponse(Page<Book> bookPage) {
-        Page<BookResponse> responsePage = bookPage.map(BookMapper::toResponse);
+    public PageResponse<BookResponse> toPageResponse(Page<Book> bookPage) {
+        Page<BookResponse> responsePage = bookPage.map(this::toResponse);
         return PageResponse.of(responsePage);
     }
 }
