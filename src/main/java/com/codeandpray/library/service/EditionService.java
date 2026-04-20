@@ -1,0 +1,50 @@
+package com.codeandpray.library.service;
+
+import com.codeandpray.library.dto.CreateEditionRequest;
+import com.codeandpray.library.dto.UpdateEditionRequest;
+import com.codeandpray.library.entity.Book;
+import com.codeandpray.library.entity.Edition;
+import com.codeandpray.library.mapper.EditionMapper;
+import com.codeandpray.library.repo.EditionRepo;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@RequiredArgsConstructor
+public class EditionService {
+
+    private final EditionRepo editionRepo;
+    private final BookService bookService; // Используем твой готовый сервис
+
+    public Page<Edition> getAll(int page, int size) {
+        return editionRepo.findAll(PageRequest.of(page, size));
+    }
+
+    public Edition getById(Long id) {
+        return editionRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Edition not found"));
+    }
+
+    @Transactional
+    public Edition create(CreateEditionRequest dto) {
+        Book book = bookService.getById(dto.getBookId());
+        Edition edition = EditionMapper.toEntity(dto, book);
+        return editionRepo.save(edition);
+    }
+
+    @Transactional
+    public Edition update(Long id, UpdateEditionRequest dto) {
+        Edition edition = getById(id);
+        if (dto.getEditionNumber() != null) edition.setEditionNumber(dto.getEditionNumber());
+        if (dto.getPublisher() != null) edition.setPublisher(dto.getPublisher());
+        return editionRepo.save(edition);
+    }
+
+    @Transactional
+    public void delete(Long id) {
+        editionRepo.delete(getById(id));
+    }
+}
