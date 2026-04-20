@@ -1,5 +1,6 @@
 package com.codeandpray.library.entity;
 
+import com.codeandpray.library.enums.LoanStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;
@@ -17,15 +18,16 @@ public class Loan {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long bookId;
-    private String bookTitle;
+    @ManyToOne
+    @JoinColumn(name = "book_id")
+    private Book book;
 
-    private Long readerId;
-    private String readerName;
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
 
     private LocalDate loanDate;
     private LocalDate returnDate;
     private LocalDate actualReturnDate;
-
-    private String status;
+    private LoanStatus status;
 }

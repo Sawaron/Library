@@ -1,5 +1,7 @@
 package com.codeandpray.library.repo;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import com.codeandpray.library.entity.Loan;
 
@@ -8,7 +10,7 @@ import java.util.Optional;
 
 public interface LoanRepo extends JpaRepository<Loan, Long> {
 
-    List<Loan> findByReaderId(Long readerId);
+    Page<Loan> findByUserId(Long readerId, Pageable pageable);
 
     Optional<Loan> findByBookIdAndStatus(Long bookId, String status);
 

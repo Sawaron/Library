@@ -2,82 +2,128 @@ package com.codeandpray.library.service;
 
 import com.codeandpray.library.dto.LoanRequest;
 import com.codeandpray.library.dto.LoanResponse;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
+import com.codeandpray.library.dto.PageResponse;
+import com.codeandpray.library.entity.Book;
 import com.codeandpray.library.entity.Loan;
+import com.codeandpray.library.entity.User;
+import com.codeandpray.library.enums.LoanStatus;
+import com.codeandpray.library.mapper.LoanMapper;
+import com.codeandpray.library.repo.BookRepo;
 import com.codeandpray.library.repo.LoanRepo;
+import com.codeandpray.library.repo.UserRepo;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class LoanService {
 
     private final LoanRepo loanRepository;
+    private final BookRepo bookRepository;
+    private final UserRepo userRepository;
+    private final LoanMapper loanMapper;
 
+    @Transactional
     public LoanResponse createLoan(LoanRequest request) {
+        Book book = bookRepository.findById(request.getBookId())
+                .orElseThrow(() -> new RuntimeException("Book not found"));
 
-        loanRepository.findByBookIdAndStatus(request.getBookId(), "ACTIVE")
-                .ifPresent(l -> {
-                    throw new RuntimeException("Book already loaned");
-                });
+        if (book.getCount() <= 0) {
+            throw new RuntimeException("No copies available in library");
+        }
+
+        User user = userRepository.findById(request.getReaderId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Автоматически +14 дней
+        LocalDate autoReturnDate = LocalDate.now().plusDays(14);
 
         Loan loan = Loan.builder()
-                .bookId(request.getBookId())
-                .bookTitle(request.getBookTitle())
-                .readerId(request.getReaderId())
-                .readerName(request.getReaderName())
+                .book(book)
+                .user(user)
                 .loanDate(LocalDate.now())
-                .returnDate(request.getReturnDate())
-                .status("ACTIVE")
+                .returnDate(autoReturnDate)
+                .status(LoanStatus.ISSUED)
                 .build();
 
-        return mapToResponse(loanRepository.save(loan));
+        book.setCount(book.getCount() - 1);
+        bookRepository.save(book);
+
+        // Убедись, что save возвращает ОДИН аргумент в toResponse
+        Loan savedLoan = loanRepository.save(loan);
+        return loanMapper.toResponse(savedLoan);
     }
 
-    public List<LoanResponse> getAllLoans() {
-        return loanRepository.findAll()
-                .stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+    @Transactional
+    public LoanResponse updateLoan(Long id, LoanRequest request) {
+        Loan loan = loanRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Loan not found"));
+
+        // Здесь можно добавить логику обновления, если в Request появились новые поля
+
+        return loanMapper.toResponse(loanRepository.save(loan));
     }
 
+    @Transactional(readOnly = true)
+    public PageResponse<LoanResponse> getAllLoans(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return PageResponse.of(loanRepository.findAll(pageable).map(loanMapper::toResponse));
+    }
+
+    @Transactional(readOnly = true)
     public LoanResponse getLoanById(Long id) {
         return loanRepository.findById(id)
-                .map(this::mapToResponse)
+                .map(loanMapper::toResponse)
                 .orElseThrow(() -> new RuntimeException("Loan not found"));
     }
 
+    @Transactional
     public LoanResponse returnBook(Long id) {
         Loan loan = loanRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Loan not found"));
 
+        if ("RETURNED".equals(loan.getStatus())) {
+            throw new RuntimeException("Book is already returned");
+        }
+
         loan.setActualReturnDate(LocalDate.now());
-        loan.setStatus("RETURNED");
+        loan.setStatus(LoanStatus.RETURNED);
 
-        return mapToResponse(loanRepository.save(loan));
+        Book book = loan.getBook();
+        book.setCount(book.getCount() + 1);
+        bookRepository.save(book);
+
+        return loanMapper.toResponse(loanRepository.save(loan));
     }
 
-    public List<LoanResponse> getLoansByReader(Long readerId) {
-        return loanRepository.findByReaderId(readerId)
-                .stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+    @Transactional(readOnly = true)
+    public PageResponse<LoanResponse> getLoansByReader(Long readerId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Loan> loanPage = loanRepository.findByUserId(readerId, pageable);
+        return PageResponse.of(loanPage.map(loanMapper::toResponse));
     }
 
-    private LoanResponse mapToResponse(Loan loan) {
-        return LoanResponse.builder()
-                .id(loan.getId())
-                .bookId(loan.getBookId())
-                .bookTitle(loan.getBookTitle())
-                .readerId(loan.getReaderId())
-                .readerName(loan.getReaderName())
-                .loanDate(loan.getLoanDate())
-                .returnDate(loan.getReturnDate())
-                .actualReturnDate(loan.getActualReturnDate())
-                .status(loan.getStatus())
-                .build();
+    @Transactional
+    public void cancelLoan(Long id) {
+        Loan loan = loanRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Loan not found"));
+
+        if ("CANCELLED".equals(loan.getStatus())) {
+            throw new RuntimeException("Loan is already cancelled");
+        }
+
+        loan.setStatus(LoanStatus.RETURNED);
+
+        Book book = loan.getBook();
+        book.setCount(book.getCount() + 1);
+        bookRepository.save(book);
+
+        loanRepository.save(loan);
     }
 }
