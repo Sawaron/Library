@@ -7,6 +7,7 @@ import lombok.Setter;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Getter
@@ -24,6 +25,6 @@ public class Author {
     private LocalDate deathDate;
 
     @JsonIgnore
-    @OneToMany(mappedBy = "author")
-    private List<Book> books;
+    @ManyToMany(mappedBy = "authors")
+    private Set<Book> books;
 }

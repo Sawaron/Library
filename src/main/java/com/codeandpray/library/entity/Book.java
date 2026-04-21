@@ -1,14 +1,15 @@
 package com.codeandpray.library.entity;
 
+import com.codeandpray.library.catalog.Genre;
 import com.codeandpray.library.enums.AgeCategory;
 import com.codeandpray.library.enums.BookStatus;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -57,6 +58,7 @@ public class Book {
 
     private int count;
 
+    @Builder.Default // Критично для работы Builder с дефолтными значениями
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "book_genre",
@@ -65,6 +67,7 @@ public class Book {
     )
     private Set<Genre> genres = new HashSet<>();
 
+    @Builder.Default // Критично для работы Builder
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "book_author",
@@ -73,9 +76,9 @@ public class Book {
     )
     private Set<Author> authors = new HashSet<>();
 
-
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-    private int count;
+    @Enumerated(EnumType.STRING)
+    private BookStatus status;
 }
