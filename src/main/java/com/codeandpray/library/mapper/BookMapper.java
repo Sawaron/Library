@@ -21,10 +21,12 @@ public class BookMapper {
                 .authors(authors)
                 .genres(genres)
                 .isbn(dto.getIsbn())
-                .description(dto.getSummary())
+                .description(dto.getDescription())
                 .language(dto.getLanguage())
                 .pageCount(dto.getPageCount())
+                .ageCategory(dto.getAgeCategory())
                 .count(dto.getCount())
+                .hasAudiobook(dto.isHasAudiobook())
                 .build();
     }
 
