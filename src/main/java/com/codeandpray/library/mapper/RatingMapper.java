@@ -5,38 +5,42 @@ import com.codeandpray.library.dto.RatingResponse;
 import com.codeandpray.library.entity.Rating;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
+
 @Component
 public class RatingMapper {
 
     public RatingResponse toResponse(Rating rating) {
-        if (rating == null) return null;
+        if (rating == null) {
+            return null;
+        }
 
         return RatingResponse.builder()
                 .id(rating.getId())
-                .bookId(rating.getBookId())
-                .userId(rating.getUserId())
+                .bookId(rating.getBook() != null ? rating.getBook().getId() : null)
+                .userId(rating.getUser() != null ? rating.getUser().getId() : null)
                 .score(rating.getScore())
                 .createdAt(rating.getCreatedAt())
                 .build();
     }
 
     public Rating toEntity(RatingRequest request) {
-        if (request == null) return null;
+        if (request == null) {
+            return null;
+        }
 
         return Rating.builder()
-                .bookId(request.getBookId())
-                .userId(request.getUserId())
                 .score(request.getScore())
-                // Дату createdAt лучше ставить в сервисе или через JPA @CreatedDate
+                .createdAt(LocalDateTime.now())
                 .build();
     }
 
-    public void updateEntity(Rating rating, RatingRequest request) {
-        if (rating == null || request == null) return;
+    public void updateEntity(Rating entity, RatingRequest request) {
+        if (entity == null || request == null) {
+            return;
+        }
 
-        rating.setBookId(request.getBookId());
-        rating.setUserId(request.getUserId());
-        rating.setScore(request.getScore());
-
+        entity.setScore(request.getScore());
+        entity.setCreatedAt(LocalDateTime.now());
     }
 }

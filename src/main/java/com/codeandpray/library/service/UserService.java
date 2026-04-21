@@ -3,92 +3,79 @@ package com.codeandpray.library.service;
 import com.codeandpray.library.dto.UserRequest;
 import com.codeandpray.library.dto.UserResponse;
 import com.codeandpray.library.entity.User;
+import com.codeandpray.library.mapper.UserMapper;
 import com.codeandpray.library.repo.UserRepo;
-import lombok.Builder;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)  // ← По умолчанию readOnly для всех методов поиска
 public class UserService {
 
     private final UserRepo userRepo;
+    private final UserMapper userMapper;
 
-
-
-    private UserResponse mapToResponse(User user) {
-        return UserResponse.builder()
-                .id(user.getId())
-                .firstname(user.getFirstname())
-                .lastname(user.getLastname())
-                .email(user.getEmail())
-                .phone(user.getPhone())
-                .registrationDate(user.getRegistrationDate())
-                .role(user.getRole())
-                .build();
-    }
-
-    private User mapToEntity(UserRequest request) {
-        return User.builder()
-                .firstname(request.getFirstname())
-                .lastname(request.getLastname())
-                .email(request.getEmail())
-                .phone(request.getPhone())
-                .password(request.getPassword())
-                .registrationDate(LocalDate.now())
-                .role("READER")
-                .build();
-    }
-
-
-    @Transactional(readOnly = true)
     public List<UserResponse> findAll() {
         return userRepo.findAll()
                 .stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+                .map(userMapper::toResponse)
+                .collect(Collectors.toList());  // ← Заменили toResponseList на stream
     }
 
-    @Transactional
-    public UserResponse save(UserRequest request) {
-        User user = mapToEntity(request);
-        User savedUser = userRepo.save(user);
-        return mapToResponse(savedUser);
+    public Page<UserResponse> findAllPaginated(Pageable pageable) {
+        return userRepo.findAll(pageable).map(userMapper::toResponse);
     }
 
-    @Transactional(readOnly = true)
+    public Page<UserResponse> findByNameContaining(String name, Pageable pageable) {
+        return userRepo.findByFirstnameContaining(name, pageable).map(userMapper::toResponse);
+    }
+
+    public Page<UserResponse> findByLastnameContaining(String lastname, Pageable pageable) {
+        return userRepo.findByLastnameContaining(lastname, pageable).map(userMapper::toResponse);
+    }
+
     public Optional<UserResponse> findById(Long id) {
-        return userRepo.findById(id)
-                .map(this::mapToResponse);
+        return userRepo.findById(id).map(userMapper::toResponse);
     }
 
-    @Transactional(readOnly = true)
     public Optional<UserResponse> findByName(String name) {
-        return userRepo.findByFirstname(name)
-                .map(this::mapToResponse);
+        return userRepo.findByFirstname(name).map(userMapper::toResponse);
     }
 
-    @Transactional
+    public Optional<UserResponse> findByLastname(String lastname) {
+        return userRepo.findByLastname(lastname).map(userMapper::toResponse);  // ← Новый метод
+    }
+
+    @Transactional(readOnly = false)  // ← Переопределяем для записи
+    public UserResponse save(UserRequest request) {
+        User user = userMapper.toEntity(request);
+        return userMapper.toResponse(userRepo.save(user));
+    }
+
+    @Transactional(readOnly = false)
     public Optional<UserResponse> updateById(Long id, UserRequest updatedRequest) {
         return userRepo.findById(id)
                 .map(oldUser -> {
-                    oldUser.setFirstname(updatedRequest.getFirstname());
-                    oldUser.setLastname(updatedRequest.getLastname());
-                    oldUser.setEmail(updatedRequest.getEmail());
-                    oldUser.setPhone(updatedRequest.getPhone());
-
-                    if (updatedRequest.getPassword() != null && !updatedRequest.getPassword().isBlank()) {
-                        oldUser.setPassword(updatedRequest.getPassword());
-                    }
-
-                    User savedUser = userRepo.save(oldUser);
-                    return mapToResponse(savedUser);
+                    userMapper.updateEntity(oldUser, updatedRequest);
+                    return userMapper.toResponse(userRepo.save(oldUser));
                 });
+    }
+
+    @Transactional(readOnly = false)
+    public boolean deleteById(Long id) {
+        return userRepo.findById(id)
+                .map(user -> {
+                    userRepo.delete(user);
+                    return true;
+                })
+                .orElse(false);
     }
 }

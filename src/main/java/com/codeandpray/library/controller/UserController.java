@@ -4,6 +4,8 @@ import com.codeandpray.library.dto.UserRequest;
 import com.codeandpray.library.dto.UserResponse;
 import com.codeandpray.library.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +22,21 @@ public class UserController {
     @GetMapping
     public List<UserResponse> findAll() {
         return userService.findAll();
+    }
+
+    @GetMapping("/paginated")
+    public Page<UserResponse> findAllPaginated(Pageable pageable) {
+        return userService.findAllPaginated(pageable);
+    }
+
+    @GetMapping("/search")
+    public Page<UserResponse> searchByName(@RequestParam String name, Pageable pageable) {
+        return userService.findByNameContaining(name, pageable);
+    }
+
+    @GetMapping("/search/lastname")
+    public Page<UserResponse> searchByLastname(@RequestParam String lastname, Pageable pageable) {
+        return userService.findByLastnameContaining(lastname, pageable);
     }
 
     @PostMapping
@@ -42,11 +59,24 @@ public class UserController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @GetMapping("/lastname/{lastname}")  // ← Новый эндпоинт
+    public ResponseEntity<UserResponse> findByLastname(@PathVariable String lastname) {
+        return userService.findByLastname(lastname)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<UserResponse> updateById(@PathVariable Long id,
                                                    @RequestBody UserRequest updatedUser) {
         return userService.updateById(id, updatedUser)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteById(@PathVariable Long id) {
+        boolean deleted = userService.deleteById(id);
+        return deleted ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
     }
 }
