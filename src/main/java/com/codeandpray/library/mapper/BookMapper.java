@@ -33,6 +33,9 @@ public class BookMapper {
         if (dto.getIsbn() != null) book.setIsbn(dto.getIsbn());
         if (dto.getSummary() != null) book.setDescription(dto.getSummary());
         if (dto.getStatus() != null) book.setStatus(BookStatus.valueOf(dto.getStatus()));
+        if (dto.getLanguage() != null) book.setLanguage(dto.getLanguage());
+        if (dto.getPageCount() != null) book.setPageCount(dto.getPageCount());
+        if (dto.getCount() != null) book.setCount(dto.getCount());
         if (authors != null) book.setAuthors(authors);
         if (genres != null) book.setGenres(genres);
     }

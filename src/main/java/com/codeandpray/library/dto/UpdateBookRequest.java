@@ -10,6 +10,9 @@ public class UpdateBookRequest {
     private Set<Long> authorIds;
     private Set<Long> genreIds;
     private String isbn;
+    private String language;
+    private Integer count;
+    private Integer pageCount;
     private String summary;
     private String status;
 
