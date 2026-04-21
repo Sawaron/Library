@@ -31,7 +31,7 @@ public class BookMapper {
     public void updateEntity(Book book, UpdateBookRequest dto, Set<Author> authors, Set<Genre> genres) {
         if (dto.getTitle() != null) book.setTitle(dto.getTitle());
         if (dto.getIsbn() != null) book.setIsbn(dto.getIsbn());
-        if (dto.getSummary() != null) book.setDescription(dto.getSummary());
+        if (dto.getDescription() != null) book.setDescription(dto.getDescription());
         if (dto.getStatus() != null) book.setStatus(BookStatus.valueOf(dto.getStatus()));
         if (dto.getLanguage() != null) book.setLanguage(dto.getLanguage());
         if (dto.getPageCount() != null) book.setPageCount(dto.getPageCount());
