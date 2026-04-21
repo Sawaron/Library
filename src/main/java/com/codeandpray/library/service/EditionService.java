@@ -3,7 +3,7 @@ package com.codeandpray.library.service;
 import com.codeandpray.library.dto.CreateEditionRequest;
 import com.codeandpray.library.dto.UpdateEditionRequest;
 import com.codeandpray.library.entity.Book;
-import com.codeandpray.library.entity.Edition;
+import com.codeandpray.library.catalog.Edition;
 import com.codeandpray.library.mapper.EditionMapper;
 import com.codeandpray.library.repo.EditionRepo;
 import lombok.RequiredArgsConstructor;

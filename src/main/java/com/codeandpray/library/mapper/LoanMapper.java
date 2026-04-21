@@ -19,7 +19,7 @@ public class LoanMapper {
                 .loanDate(loan.getLoanDate())
                 .returnDate(loan.getLoanDate().plusDays(14))
                 .actualReturnDate(loan.getActualReturnDate())
-                .status(loan.getStatus())
+                .status(String.valueOf(loan.getStatus()))
                 .build();
     }
 }

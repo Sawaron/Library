@@ -1,6 +1,8 @@
 package com.codeandpray.library.mapper;
 
+import com.codeandpray.library.catalog.Genre;
 import com.codeandpray.library.dto.*;
+import com.codeandpray.library.entity.Author;
 import com.codeandpray.library.entity.Book;
 import com.codeandpray.library.enums.BookStatus;
 import org.springframework.data.domain.Page;
@@ -52,9 +54,7 @@ public class BookMapper {
                 .build();
     }
 
-
-    public PageResponse<BookResponse> toPageResponse(Page<Book> bookPage) {
-        Page<BookResponse> responsePage = bookPage.map(this::toResponse);
-        return PageResponse.of(responsePage);
+    public PageResponse<BookResponse> toPageResponse(Page<Book> books) {
+        return PageResponse.of(books.map(this::toResponse));
     }
 }
