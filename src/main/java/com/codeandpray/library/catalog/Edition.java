@@ -2,30 +2,34 @@ package com.codeandpray.library.catalog;
 
 import com.codeandpray.library.entity.Book;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDate;
 
+@Entity
+@Table(name = "editions")
 @Getter
 @Setter
-@Entity
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Edition {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "book_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "book_id", nullable = false)
     private Book book;
 
-    @Column(name = "edition_number")
-    private Long editionNumber;
+    @Column(name = "edition_number", nullable = false)
+    private Integer editionNumber;
 
-    @Column(name = "edition_publisher")
+    @Column(nullable = false)
     private String publisher;
 
-    @Column(name = "edition_publish_date")
+    @CreationTimestamp
+    @Column(name = "publish_date", updatable = false)
     private LocalDate publishDate;
 }

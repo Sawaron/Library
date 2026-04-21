@@ -6,6 +6,7 @@ import lombok.Value;
 @Value
 @Builder
 public class BookResponse {
+
     String title;
     String description;
     String publishDate;
@@ -18,4 +19,5 @@ public class BookResponse {
     String isbn;
     String genres;
     String bookAuthor;
+
 }

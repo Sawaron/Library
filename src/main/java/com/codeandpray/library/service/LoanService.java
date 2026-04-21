@@ -41,7 +41,6 @@ public class LoanService {
         User user = userRepository.findById(request.getReaderId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Автоматически +14 дней
         LocalDate autoReturnDate = LocalDate.now().plusDays(14);
 
         Loan loan = Loan.builder()
@@ -55,17 +54,17 @@ public class LoanService {
         book.setCount(book.getCount() - 1);
         bookRepository.save(book);
 
-        // Убедись, что save возвращает ОДИН аргумент в toResponse
         Loan savedLoan = loanRepository.save(loan);
         return loanMapper.toResponse(savedLoan);
     }
-
     @Transactional
     public LoanResponse updateLoan(Long id, LoanRequest request) {
         Loan loan = loanRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Loan not found"));
 
-        // Здесь можно добавить логику обновления, если в Request появились новые поля
+        if (request.getReturnDate() != null) {
+            loan.setReturnDate(request.getReturnDate());
+        }
 
         return loanMapper.toResponse(loanRepository.save(loan));
     }
@@ -82,13 +81,13 @@ public class LoanService {
                 .map(loanMapper::toResponse)
                 .orElseThrow(() -> new RuntimeException("Loan not found"));
     }
-
     @Transactional
     public LoanResponse returnBook(Long id) {
         Loan loan = loanRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Loan not found"));
 
-        if ("RETURNED".equals(loan.getStatus())) {
+        // ИСПРАВЛЕНО: Сравниваем с Enum константой
+        if (loan.getStatus() == LoanStatus.RETURNED) {
             throw new RuntimeException("Book is already returned");
         }
 
@@ -108,17 +107,16 @@ public class LoanService {
         Page<Loan> loanPage = loanRepository.findByUserId(readerId, pageable);
         return PageResponse.of(loanPage.map(loanMapper::toResponse));
     }
-
     @Transactional
     public void cancelLoan(Long id) {
         Loan loan = loanRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Loan not found"));
 
-        if ("CANCELLED".equals(loan.getStatus())) {
-            throw new RuntimeException("Loan is already cancelled");
+        if (loan.getStatus() == LoanStatus.RETURNED) { // или LoanStatus.CANCELLED
+            throw new RuntimeException("Loan is already processed");
         }
 
-        loan.setStatus(LoanStatus.RETURNED);
+        loan.setStatus(LoanStatus.RETURNED); // Или другой статус по твоей логике
 
         Book book = loan.getBook();
         book.setCount(book.getCount() + 1);
