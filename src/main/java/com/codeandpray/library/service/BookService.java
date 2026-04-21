@@ -1,86 +1,76 @@
 package com.codeandpray.library.service;
 
-import com.codeandpray.library.dto.CreateBookRequest;
-import com.codeandpray.library.entity.Author;
-import com.codeandpray.library.entity.Book;
+import com.codeandpray.library.dto.*;
+import com.codeandpray.library.entity.*;
 import com.codeandpray.library.enums.BookStatus;
 import com.codeandpray.library.mapper.BookMapper;
-import com.codeandpray.library.repo.AuthorRepo;
-import com.codeandpray.library.repo.BookRepo;
+import com.codeandpray.library.repo.*;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @Service
 public class BookService {
 
     private final BookRepo bookRepository;
     private final AuthorRepo authorRepo;
+    private final GenreRepo genreRepo;
+    private final BookMapper bookMapper;
 
-    public BookService(BookRepo bookRepository, AuthorRepo authorRepo) {
+    public BookService(BookRepo bookRepository, AuthorRepo authorRepo,
+                       GenreRepo genreRepo, BookMapper bookMapper) {
         this.bookRepository = bookRepository;
         this.authorRepo = authorRepo;
+        this.genreRepo = genreRepo;
+        this.bookMapper = bookMapper;
     }
 
-
+    @Transactional(readOnly = true)
     public Page<Book> getBooks(String title, String author, String genre,
                                String isbn, BookStatus status,
                                int page, int size) {
-
         Pageable pageable = PageRequest.of(page, size);
         return bookRepository.findAllByFilters(title, author, genre, isbn, status, pageable);
     }
 
+    @Transactional(readOnly = true)
     public Book getById(Long id) {
         return bookRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Book not found"));
     }
 
+    @Transactional
     public Book create(CreateBookRequest dto) {
+        Set<Author> authors = new HashSet<>(authorRepo.findAllById(dto.getAuthorIds()));
+        Set<Genre> genres = new HashSet<>(genreRepo.findAllById(dto.getGenreIds()));
 
-
-        Author author = authorRepo.findById(dto.getAuthorId())
-                .orElseThrow(() -> new RuntimeException("Author not found with id: " + dto.getAuthorId()));
-
-
-        Book book = BookMapper.toEntity(dto);
-
-
-        book.setAuthor(author);
+        Book book = bookMapper.toEntity(dto, authors, genres);
         book.setStatus(BookStatus.AVAILABLE);
 
         return bookRepository.save(book);
     }
 
-    public Book updateById(Long id, Book updatedBook) {
-
+    @Transactional
+    public Book updateById(Long id, UpdateBookRequest dto) {
         Book book = getById(id);
 
-        applyUpdates(book, updatedBook);
+        Set<Author> authors = dto.getAuthorIds() != null
+                ? new HashSet<>(authorRepo.findAllById(dto.getAuthorIds()))
+                : null;
+
+        Set<Genre> genres = dto.getGenreIds() != null
+                ? new HashSet<>(genreRepo.findAllById(dto.getGenreIds()))
+                : null;
+
+        bookMapper.updateEntity(book, dto, authors, genres);
 
         return bookRepository.save(book);
     }
 
-    private void applyUpdates(Book book, Book updatedBook) {
-
-        if (updatedBook.getTitle() != null)
-            book.setTitle(updatedBook.getTitle());
-
-        if (updatedBook.getAuthor() != null)
-            book.setAuthor(updatedBook.getAuthor());
-
-        if (updatedBook.getGenre() != null)
-            book.setGenre(updatedBook.getGenre());
-
-        if (updatedBook.getIsbn() != null)
-            book.setIsbn(updatedBook.getIsbn());
-
-        if (updatedBook.getSummary() != null)
-            book.setSummary(updatedBook.getSummary());
-
-        if (updatedBook.getStatus() != null)
-            book.setStatus(updatedBook.getStatus());
-    }
-
+    @Transactional
     public void deleteById(Long id) {
         bookRepository.delete(getById(id));
     }

@@ -11,7 +11,10 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @Entity
-@Table(name = "book_popularities")
+@Table(name = "book_popularities",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = {"book_id", "period"})
+        })
 @Builder
 public class BookPopularity {
 
@@ -20,8 +23,9 @@ public class BookPopularity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "book_id", nullable = false)
-    private Long bookId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "book_id", nullable = false)
+    private Book book;
 
     @Column(name = "read_count", nullable = false)
     private Integer readCount;
