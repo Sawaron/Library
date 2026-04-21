@@ -13,64 +13,63 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)  // ← По умолчанию readOnly для всех методов поиска
 public class UserService {
 
     private final UserRepo userRepo;
     private final UserMapper userMapper;
 
-
-    @Transactional(readOnly = true)
     public List<UserResponse> findAll() {
-        return userMapper.toResponseList(userRepo.findAll());
+        return userRepo.findAll()
+                .stream()
+                .map(userMapper::toResponse)
+                .collect(Collectors.toList());  // ← Заменили toResponseList на stream
     }
 
-
-    @Transactional(readOnly = true)
     public Page<UserResponse> findAllPaginated(Pageable pageable) {
-        return userRepo.findAll(pageable)
-                .map(userMapper::toResponse);
+        return userRepo.findAll(pageable).map(userMapper::toResponse);
     }
 
-    @Transactional(readOnly = true)
     public Page<UserResponse> findByNameContaining(String name, Pageable pageable) {
-        return userRepo.findByFirstnameContaining(name, pageable)
-                .map(userMapper::toResponse);
+        return userRepo.findByFirstnameContaining(name, pageable).map(userMapper::toResponse);
     }
 
+    public Page<UserResponse> findByLastnameContaining(String lastname, Pageable pageable) {
+        return userRepo.findByLastnameContaining(lastname, pageable).map(userMapper::toResponse);
+    }
 
-    @Transactional
+    public Optional<UserResponse> findById(Long id) {
+        return userRepo.findById(id).map(userMapper::toResponse);
+    }
+
+    public Optional<UserResponse> findByName(String name) {
+        return userRepo.findByFirstname(name).map(userMapper::toResponse);
+    }
+
+    public Optional<UserResponse> findByLastname(String lastname) {
+        return userRepo.findByLastname(lastname).map(userMapper::toResponse);  // ← Новый метод
+    }
+
+    @Transactional(readOnly = false)  // ← Переопределяем для записи
     public UserResponse save(UserRequest request) {
         User user = userMapper.toEntity(request);
-        User savedUser = userRepo.save(user);
-        return userMapper.toResponse(savedUser);
+        return userMapper.toResponse(userRepo.save(user));
     }
 
-    @Transactional(readOnly = true)
-    public Optional<UserResponse> findById(Long id) {
-        return userRepo.findById(id)
-                .map(userMapper::toResponse);
-    }
-
-    @Transactional(readOnly = true)
-    public Optional<UserResponse> findByName(String name) {
-        return userRepo.findByFirstname(name)
-                .map(userMapper::toResponse);
-    }
-
-    @Transactional
+    @Transactional(readOnly = false)
     public Optional<UserResponse> updateById(Long id, UserRequest updatedRequest) {
         return userRepo.findById(id)
                 .map(oldUser -> {
                     userMapper.updateEntity(oldUser, updatedRequest);
-                    User savedUser = userRepo.save(oldUser);
-                    return userMapper.toResponse(savedUser);
+                    return userMapper.toResponse(userRepo.save(oldUser));
                 });
     }
 
-    @Transactional
+    @Transactional(readOnly = false)
     public boolean deleteById(Long id) {
         return userRepo.findById(id)
                 .map(user -> {

@@ -6,8 +6,6 @@ import com.codeandpray.library.entity.User;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Component
 public class UserMapper {
@@ -42,16 +40,6 @@ public class UserMapper {
                 .registrationDate(LocalDate.now())
                 .role("READER")
                 .build();
-    }
-
-    public List<UserResponse> toResponseList(List<User> users) {
-        if (users == null) {
-            return List.of();
-        }
-
-        return users.stream()
-                .map(this::toResponse)
-                .collect(Collectors.toList());
     }
 
     public void updateEntity(User user, UserRequest request) {

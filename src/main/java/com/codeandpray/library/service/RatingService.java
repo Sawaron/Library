@@ -2,9 +2,13 @@ package com.codeandpray.library.service;
 
 import com.codeandpray.library.dto.RatingRequest;
 import com.codeandpray.library.dto.RatingResponse;
+import com.codeandpray.library.entity.Book;
 import com.codeandpray.library.entity.Rating;
+import com.codeandpray.library.entity.User;
 import com.codeandpray.library.mapper.RatingMapper;
+import com.codeandpray.library.repo.BookRepo;
 import com.codeandpray.library.repo.RatingRepo;
+import com.codeandpray.library.repo.UserRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -14,105 +18,112 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)  // ← По умолчанию readOnly
 public class RatingService {
 
     private final RatingRepo ratingRepo;
+    private final BookRepo bookRepo;
+    private final UserRepo userRepo;
     private final RatingMapper ratingMapper;
 
-
-    @Transactional(readOnly = true)
     public List<RatingResponse> findAll() {
-        return ratingMapper.toResponseList(ratingRepo.findAll());
+        return ratingRepo.findAll()
+                .stream()
+                .map(ratingMapper::toResponse)
+                .collect(Collectors.toList());
     }
 
-    @Transactional(readOnly = true)
     public List<RatingResponse> findByBookId(Long bookId) {
-        return ratingMapper.toResponseList(ratingRepo.findByBookId(bookId));
+        return ratingRepo.findByBookId(bookId)
+                .stream()
+                .map(ratingMapper::toResponse)
+                .collect(Collectors.toList());
     }
 
-    @Transactional(readOnly = true)
     public List<RatingResponse> findByUserId(Long userId) {
-        return ratingMapper.toResponseList(ratingRepo.findByUserId(userId));
+        return ratingRepo.findByUserId(userId)
+                .stream()
+                .map(ratingMapper::toResponse)
+                .collect(Collectors.toList());
     }
 
-
-    @Transactional(readOnly = true)
     public Page<RatingResponse> findAllPaginated(Pageable pageable) {
-        return ratingRepo.findAll(pageable)
-                .map(ratingMapper::toResponse);
+        return ratingRepo.findAll(pageable).map(ratingMapper::toResponse);
     }
 
-    @Transactional(readOnly = true)
     public Page<RatingResponse> findByBookIdPaginated(Long bookId, Pageable pageable) {
-        return ratingRepo.findByBookId(bookId, pageable)
-                .map(ratingMapper::toResponse);
+        return ratingRepo.findByBookId(bookId, pageable).map(ratingMapper::toResponse);
     }
 
-    @Transactional(readOnly = true)
     public Page<RatingResponse> findByUserIdPaginated(Long userId, Pageable pageable) {
-        return ratingRepo.findByUserId(userId, pageable)
-                .map(ratingMapper::toResponse);
+        return ratingRepo.findByUserId(userId, pageable).map(ratingMapper::toResponse);
     }
 
-    @Transactional(readOnly = true)
     public Page<RatingResponse> findByScore(Integer score, Pageable pageable) {
-        return ratingRepo.findByScore(score, pageable)
-                .map(ratingMapper::toResponse);
+        return ratingRepo.findByScore(score, pageable).map(ratingMapper::toResponse);
     }
 
-    @Transactional(readOnly = true)
     public Page<RatingResponse> findHighRatings(Integer minScore, Pageable pageable) {
-        return ratingRepo.findByScoreGreaterThanEqual(minScore, pageable)
-                .map(ratingMapper::toResponse);
+        return ratingRepo.findByScoreGreaterThanEqual(minScore, pageable).map(ratingMapper::toResponse);
     }
 
-    @Transactional(readOnly = true)
     public Page<RatingResponse> findBookHighRatings(Long bookId, Integer minScore, Pageable pageable) {
-        return ratingRepo.findByBookIdAndMinScore(bookId, minScore, pageable)
-                .map(ratingMapper::toResponse);
+        return ratingRepo.findByBookIdAndMinScore(bookId, minScore, pageable).map(ratingMapper::toResponse);
     }
 
-
-    @Transactional
+    @Transactional(readOnly = false)
     public RatingResponse save(RatingRequest request) {
-        Optional<Rating> existingRating = ratingRepo.findByBookIdAndUserId(
-                request.getBookId(),
-                request.getUserId()
-        );
+        Book book = bookRepo.findById(request.getBookId())
+                .orElseThrow(() -> new RuntimeException("Book not found with id: " + request.getBookId()));
+
+        User user = userRepo.findById(request.getUserId())
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + request.getUserId()));
+
+        Optional<Rating> existingRating = ratingRepo.findByBookAndUser(book, user);
 
         if (existingRating.isPresent()) {
             Rating rating = existingRating.get();
             rating.setScore(request.getScore());
             rating.setCreatedAt(LocalDateTime.now());
-            Rating savedRating = ratingRepo.save(rating);
-            return ratingMapper.toResponse(savedRating);
+            return ratingMapper.toResponse(ratingRepo.save(rating));
         }
 
         Rating rating = ratingMapper.toEntity(request);
-        Rating savedRating = ratingRepo.save(rating);
-        return ratingMapper.toResponse(savedRating);
+        rating.setBook(book);
+        rating.setUser(user);
+        return ratingMapper.toResponse(ratingRepo.save(rating));
     }
 
-    @Transactional(readOnly = true)
     public Optional<RatingResponse> findById(Long id) {
-        return ratingRepo.findById(id)
-                .map(ratingMapper::toResponse);
+        return ratingRepo.findById(id).map(ratingMapper::toResponse);
     }
 
-    @Transactional
+    @Transactional(readOnly = false)
     public Optional<RatingResponse> updateById(Long id, RatingRequest updatedRequest) {
         return ratingRepo.findById(id)
                 .map(oldRating -> {
+                    if (!oldRating.getBook().getId().equals(updatedRequest.getBookId())) {
+                        Book newBook = bookRepo.findById(updatedRequest.getBookId())
+                                .orElseThrow(() -> new RuntimeException("Book not found"));
+                        oldRating.setBook(newBook);
+                    }
+
+                    if (!oldRating.getUser().getId().equals(updatedRequest.getUserId())) {
+                        User newUser = userRepo.findById(updatedRequest.getUserId())
+                                .orElseThrow(() -> new RuntimeException("User not found"));
+                        oldRating.setUser(newUser);
+                    }
+
                     ratingMapper.updateEntity(oldRating, updatedRequest);
-                    Rating savedRating = ratingRepo.save(oldRating);
-                    return ratingMapper.toResponse(savedRating);
+                    return ratingMapper.toResponse(ratingRepo.save(oldRating));
                 });
     }
 
-    @Transactional
+    @Transactional(readOnly = false)
     public boolean deleteById(Long id) {
         return ratingRepo.findById(id)
                 .map(rating -> {

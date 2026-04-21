@@ -2,10 +2,12 @@ package com.codeandpray.library.service;
 
 import com.codeandpray.library.dto.BookPopularityRequest;
 import com.codeandpray.library.dto.BookPopularityResponse;
+import com.codeandpray.library.entity.Book;
 import com.codeandpray.library.entity.BookPopularity;
 import com.codeandpray.library.enums.BookPopularityPeriod;
 import com.codeandpray.library.mapper.BookPopularityMapper;
 import com.codeandpray.library.repo.BookPopularityRepo;
+import com.codeandpray.library.repo.BookRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,56 +17,55 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)  // ← По умолчанию readOnly
 public class BookPopularityService {
 
     private final BookPopularityRepo bookPopularityRepo;
+    private final BookRepo bookRepo;
     private final BookPopularityMapper bookPopularityMapper;
 
-
-    @Transactional(readOnly = true)
     public List<BookPopularityResponse> findAll() {
-        return bookPopularityMapper.toResponseList(bookPopularityRepo.findAll());
+        return bookPopularityRepo.findAll()
+                .stream()
+                .map(bookPopularityMapper::toResponse)
+                .collect(Collectors.toList());
     }
 
-    @Transactional(readOnly = true)
     public List<BookPopularityResponse> findByBookId(Long bookId) {
-        return bookPopularityMapper.toResponseList(bookPopularityRepo.findByBookId(bookId));
+        return bookPopularityRepo.findByBookId(bookId)
+                .stream()
+                .map(bookPopularityMapper::toResponse)
+                .collect(Collectors.toList());
     }
 
-    @Transactional(readOnly = true)
     public List<BookPopularityResponse> findByPeriod(BookPopularityPeriod period) {
-        return bookPopularityMapper.toResponseList(bookPopularityRepo.findByPeriod(period));
+        return bookPopularityRepo.findByPeriod(period)
+                .stream()
+                .map(bookPopularityMapper::toResponse)
+                .collect(Collectors.toList());
     }
 
-
-    @Transactional(readOnly = true)
     public Page<BookPopularityResponse> findAllPaginated(Pageable pageable) {
-        return bookPopularityRepo.findAll(pageable)
-                .map(bookPopularityMapper::toResponse);
+        return bookPopularityRepo.findAll(pageable).map(bookPopularityMapper::toResponse);
     }
 
-    @Transactional(readOnly = true)
     public Page<BookPopularityResponse> findByBookIdPaginated(Long bookId, Pageable pageable) {
-        return bookPopularityRepo.findByBookId(bookId, pageable)
-                .map(bookPopularityMapper::toResponse);
+        return bookPopularityRepo.findByBookId(bookId, pageable).map(bookPopularityMapper::toResponse);
     }
 
-    @Transactional(readOnly = true)
     public Page<BookPopularityResponse> findByPeriodPaginated(BookPopularityPeriod period, Pageable pageable) {
-        return bookPopularityRepo.findByPeriod(period, pageable)
-                .map(bookPopularityMapper::toResponse);
+        return bookPopularityRepo.findByPeriod(period, pageable).map(bookPopularityMapper::toResponse);
     }
 
-    @Transactional(readOnly = true)
     public Page<BookPopularityResponse> findPopularBooks(Integer minReadCount, Pageable pageable) {
         return bookPopularityRepo.findByReadCountGreaterThanEqual(minReadCount, pageable)
                 .map(bookPopularityMapper::toResponse);
     }
 
-    @Transactional(readOnly = true)
     public Page<BookPopularityResponse> findPopularByPeriod(BookPopularityPeriod period,
                                                             Integer minReadCount,
                                                             Pageable pageable) {
@@ -72,15 +73,15 @@ public class BookPopularityService {
                 .map(bookPopularityMapper::toResponse);
     }
 
-    @Transactional(readOnly = true)
     public Page<BookPopularityResponse> findMostPopular(Pageable pageable) {
-        return bookPopularityRepo.findMostPopular(pageable)
-                .map(bookPopularityMapper::toResponse);
+        return bookPopularityRepo.findMostPopular(pageable).map(bookPopularityMapper::toResponse);
     }
 
-
-    @Transactional
+    @Transactional(readOnly = false)
     public BookPopularityResponse save(BookPopularityRequest request) {
+        Book book = bookRepo.findById(request.getBookId())
+                .orElseThrow(() -> new RuntimeException("Book not found with id: " + request.getBookId()));
+
         Optional<BookPopularity> existingPopularity = bookPopularityRepo.findByBookIdAndPeriod(
                 request.getBookId(),
                 request.getPeriod()
@@ -90,32 +91,34 @@ public class BookPopularityService {
             BookPopularity popularity = existingPopularity.get();
             popularity.setReadCount(request.getReadCount());
             popularity.setCalculatedAt(LocalDateTime.now());
-            BookPopularity savedPopularity = bookPopularityRepo.save(popularity);
-            return bookPopularityMapper.toResponse(savedPopularity);
+            return bookPopularityMapper.toResponse(bookPopularityRepo.save(popularity));
         }
 
         BookPopularity popularity = bookPopularityMapper.toEntity(request);
-        BookPopularity savedPopularity = bookPopularityRepo.save(popularity);
-        return bookPopularityMapper.toResponse(savedPopularity);
+        popularity.setBook(book);
+        return bookPopularityMapper.toResponse(bookPopularityRepo.save(popularity));
     }
 
-    @Transactional(readOnly = true)
     public Optional<BookPopularityResponse> findById(Long id) {
-        return bookPopularityRepo.findById(id)
-                .map(bookPopularityMapper::toResponse);
+        return bookPopularityRepo.findById(id).map(bookPopularityMapper::toResponse);
     }
 
-    @Transactional
+    @Transactional(readOnly = false)
     public Optional<BookPopularityResponse> updateById(Long id, BookPopularityRequest updatedRequest) {
         return bookPopularityRepo.findById(id)
                 .map(oldPopularity -> {
+                    if (!oldPopularity.getBook().getId().equals(updatedRequest.getBookId())) {
+                        Book newBook = bookRepo.findById(updatedRequest.getBookId())
+                                .orElseThrow(() -> new RuntimeException("Book not found"));
+                        oldPopularity.setBook(newBook);
+                    }
+
                     bookPopularityMapper.updateEntity(oldPopularity, updatedRequest);
-                    BookPopularity savedPopularity = bookPopularityRepo.save(oldPopularity);
-                    return bookPopularityMapper.toResponse(savedPopularity);
+                    return bookPopularityMapper.toResponse(bookPopularityRepo.save(oldPopularity));
                 });
     }
 
-    @Transactional
+    @Transactional(readOnly = false)
     public boolean deleteById(Long id) {
         return bookPopularityRepo.findById(id)
                 .map(popularity -> {
@@ -125,8 +128,11 @@ public class BookPopularityService {
                 .orElse(false);
     }
 
-    @Transactional
+    @Transactional(readOnly = false)
     public void incrementReadCount(Long bookId, BookPopularityPeriod period) {
+        Book book = bookRepo.findById(bookId)
+                .orElseThrow(() -> new RuntimeException("Book not found with id: " + bookId));
+
         bookPopularityRepo.findByBookIdAndPeriod(bookId, period)
                 .ifPresentOrElse(
                         popularity -> {
@@ -136,7 +142,7 @@ public class BookPopularityService {
                         },
                         () -> {
                             BookPopularity newPopularity = BookPopularity.builder()
-                                    .bookId(bookId)
+                                    .book(book)
                                     .readCount(1)
                                     .period(period)
                                     .calculatedAt(LocalDateTime.now())
