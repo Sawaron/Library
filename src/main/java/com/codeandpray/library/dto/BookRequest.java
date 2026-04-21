@@ -42,7 +42,6 @@ public class BookRequest {
     @PositiveOrZero(message = "Количество не может быть отрицательной")
     private int count;
 
-    // Списки ID для связей Many-to-Many
     @NotEmpty(message = "У книги должен быть хотя бы один автор")
     private Set<Long> authorIds;
 
