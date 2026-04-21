@@ -58,7 +58,7 @@ public class Book {
 
     private int count;
 
-    @Builder.Default // Критично для работы Builder с дефолтными значениями
+    @Builder.Default
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "book_genre",
@@ -67,7 +67,7 @@ public class Book {
     )
     private Set<Genre> genres = new HashSet<>();
 
-    @Builder.Default // Критично для работы Builder
+    @Builder.Default
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "book_author",
