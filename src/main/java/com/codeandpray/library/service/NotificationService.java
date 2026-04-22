@@ -28,4 +28,27 @@ public class NotificationService {
         n.setRead(true);
         repo.save(n);
     }
+
+    public List<Notification> getAll() {
+        return repo.findAll();
+    }
+
+    public Notification getById(Long id) {
+        return repo.findById(id).orElseThrow();
+    }
+
+    public Notification update(Long id, Notification newData) {
+        Notification existing = repo.findById(id).orElseThrow();
+
+        existing.setMessage(newData.getMessage());
+        existing.setUserId(newData.getUserId());
+        existing.setRead(newData.isRead());
+        existing.setType(newData.getType());
+
+        return repo.save(existing);
+    }
+
+    public void delete(Long id) {
+        repo.deleteById(id);
+    }
 }
