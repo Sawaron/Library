@@ -1,6 +1,6 @@
 package com.codeandpray.library.dto;
 
-public class NotificationDto {
+public class NotificationResponse {
     private Long uniqueId;
     private Long userId;
     private String message;

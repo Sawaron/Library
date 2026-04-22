@@ -1,12 +1,12 @@
 package com.codeandpray.library.mapper;
 
 import com.codeandpray.library.entity.Notification;
-import com.codeandpray.library.dto.NotificationDto;
+import com.codeandpray.library.dto.NotificationResponse;
 
 public class NotificationMapper {
 
-    public static NotificationDto toDto(Notification notification) {
-        NotificationDto dto = new NotificationDto();
+    public static NotificationResponse toDto(Notification notification) {
+        NotificationResponse dto = new NotificationResponse();
 
         dto.setUniqueId(notification.getUniqueId());
         dto.setUserId(notification.getUserId());
@@ -16,7 +16,7 @@ public class NotificationMapper {
         return dto;
     }
 
-    public static Notification toEntity(NotificationDto dto){
+    public static Notification toEntity(NotificationResponse dto){
         Notification notification = new Notification();
 
         notification.setUniqueId(dto.getUniqueId());

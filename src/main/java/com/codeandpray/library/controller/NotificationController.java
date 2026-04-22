@@ -1,6 +1,6 @@
 package com.codeandpray.library.controller;
 
-import com.codeandpray.library.dto.NotificationDto;
+import com.codeandpray.library.dto.NotificationResponse;
 import com.codeandpray.library.entity.Notification;
 import com.codeandpray.library.mapper.NotificationMapper;
 import com.codeandpray.library.service.NotificationService;
@@ -19,14 +19,14 @@ public class NotificationController {
     }
 
     @PostMapping
-    public NotificationDto create(@RequestBody NotificationDto dto){
+    public NotificationResponse create(@RequestBody NotificationResponse dto){
         Notification notification = NotificationMapper.toEntity(dto);
         Notification saved = service.create(notification);
         return NotificationMapper.toDto(saved);
     }
 
     @GetMapping("/user/{userId}")
-    public List<NotificationDto> getByUser(@PathVariable Long userId)  {
+    public List<NotificationResponse> getByUser(@PathVariable Long userId)  {
         return service.getByUser(userId)
                 .stream()
                 .map(NotificationMapper::toDto)
@@ -34,12 +34,12 @@ public class NotificationController {
     }
 
     @GetMapping("/id")
-    public NotificationDto getById(@PathVariable Long id) {
+    public NotificationResponse getById(@PathVariable Long id) {
         return NotificationMapper.toDto(service.getById(id));
     }
 
     @PutMapping("/{id}")
-    public NotificationDto update(@PathVariable Long id, @RequestBody NotificationDto dto) {
+    public NotificationResponse update(@PathVariable Long id, @RequestBody NotificationResponse dto) {
         Notification notification = NotificationMapper.toEntity(dto);
         Notification updated = service.update(id, notification);
         return NotificationMapper.toDto((updated));
