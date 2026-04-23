@@ -1,5 +1,6 @@
 package com.codeandpray.library.controller;
 
+import com.codeandpray.library.dto.NotificationRequest;
 import com.codeandpray.library.dto.NotificationResponse;
 import com.codeandpray.library.entity.Notification;
 import com.codeandpray.library.mapper.NotificationMapper;
@@ -9,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/notifications")
+@RequestMapping("/api/v1/notifications")
 public class NotificationController {
 
     private final NotificationService service;
@@ -18,35 +19,46 @@ public class NotificationController {
         this.service = service;
     }
 
-    @PostMapping
-    public NotificationResponse create(@RequestBody NotificationResponse dto){
-        Notification notification = NotificationMapper.toEntity(dto);
-        Notification saved = service.create(notification);
-        return NotificationMapper.toDto(saved);
-    }
+
 
     @GetMapping("/user/{userId}")
     public List<NotificationResponse> getByUser(@PathVariable Long userId)  {
         return service.getByUser(userId)
                 .stream()
-                .map(NotificationMapper::toDto)
+                .map(NotificationMapper::toResponse)
                 .toList();
     }
 
-    @GetMapping("/id")
+    @GetMapping("/{id}")
     public NotificationResponse getById(@PathVariable Long id) {
-        return NotificationMapper.toDto(service.getById(id));
+        return NotificationMapper.toResponse(service.getById(id));
     }
 
     @PutMapping("/{id}")
-    public NotificationResponse update(@PathVariable Long id, @RequestBody NotificationResponse dto) {
-        Notification notification = NotificationMapper.toEntity(dto);
+    public NotificationResponse update(@PathVariable Long id, @RequestBody NotificationRequest req) {
+        Notification notification = NotificationMapper.toEntity(req);
         Notification updated = service.update(id, notification);
-        return NotificationMapper.toDto((updated));
+        return NotificationMapper.toResponse((updated));
     }
 
-    @DeleteMapping("/id")
+    @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
         service.delete(id);
     }
+
+    @PostMapping
+    public NotificationResponse create(@RequestBody NotificationRequest req) {
+        Notification notification = NotificationMapper.toEntity(req);
+        return NotificationMapper.toResponse(service.create(notification));
+    }
+
+    @GetMapping
+    public List<NotificationResponse> getAll() {
+        return service.getAll()
+                .stream()
+                .map(NotificationMapper::toResponse)
+                .toList();
+    }
+
+
 }
