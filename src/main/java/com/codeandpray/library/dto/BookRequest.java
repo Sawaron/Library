@@ -27,8 +27,6 @@ public class BookRequest {
     @NotBlank(message = "Язык обязателен для заполнения")
     private String language;
 
-    @PositiveOrZero(message = "Цена не может быть отрицательной")
-    private float price;
 
     private boolean hasAudiobook;
 

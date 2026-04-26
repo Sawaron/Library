@@ -6,8 +6,10 @@ import com.codeandpray.library.mapper.ReviewMapper;
 import com.codeandpray.library.repo.ReviewRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +27,13 @@ public class ReviewService {
 
     @Transactional
     public ReviewResponse create(ReviewRequest dto) {
+        if (reviewRepo.existsByBookIdAndUserId(dto.getBookId(), dto.getUserId())) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "You have already left a review for this book"
+            );
+        }
+
         Book book = bookService.getById(dto.getBookId());
 
         Review review = Review.builder()

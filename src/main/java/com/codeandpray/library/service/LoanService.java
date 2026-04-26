@@ -28,6 +28,7 @@ public class LoanService {
     private final BookRepo bookRepository;
     private final UserRepo userRepository;
     private final LoanMapper loanMapper;
+    private final FineService fineService;
 
     @Transactional
     public LoanResponse createLoan(LoanRequest request) {
@@ -86,10 +87,14 @@ public class LoanService {
         Loan loan = loanRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Loan not found"));
 
-        // ИСПРАВЛЕНО: Сравниваем с Enum константой
         if (loan.getStatus() == LoanStatus.RETURNED) {
             throw new RuntimeException("Book is already returned");
         }
+
+//       TODO: Интегрировать метод МухаммадРасула когда он будет готов
+//        if (LocalDate.now().isAfter(loan.getReturnDate())) {
+//             fineService.generateOverdueFine(loan);
+//        }
 
         loan.setActualReturnDate(LocalDate.now());
         loan.setStatus(LoanStatus.RETURNED);
@@ -112,11 +117,14 @@ public class LoanService {
         Loan loan = loanRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Loan not found"));
 
-        if (loan.getStatus() == LoanStatus.RETURNED) { // или LoanStatus.CANCELLED
+
+        if (loan.getStatus() == LoanStatus.RETURNED || loan.getStatus() == LoanStatus.CANCELLED) {
             throw new RuntimeException("Loan is already processed");
         }
 
-        loan.setStatus(LoanStatus.RETURNED); // Или другой статус по твоей логике
+
+        loan.setStatus(LoanStatus.CANCELLED);
+
 
         Book book = loan.getBook();
         book.setCount(book.getCount() + 1);
