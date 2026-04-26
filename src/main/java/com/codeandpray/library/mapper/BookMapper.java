@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
 @Component
 public class BookMapper {
 
-
     public Book toEntity(CreateBookRequest dto, Set<Author> authors, Set<Genre> genres) {
         return Book.builder()
                 .title(dto.getTitle())
@@ -49,13 +48,19 @@ public class BookMapper {
                 .publishDate(book.getPublishDate() != null ? book.getPublishDate().toLocalDate().toString() : null)
                 .pageCount(book.getPageCount())
                 .language(book.getLanguage())
-                .price(book.getPrice())
                 .hasAudiobook(book.isHasAudiobook())
                 .readingTime(book.getReaderTime())
                 .ageCategory(book.getAgeCategory() != null ? book.getAgeCategory().getValue() : null)
                 .isbn(book.getIsbn())
-                .genres(book.getGenres() != null ? book.getGenres().stream().map(Genre::getName).collect(Collectors.joining(", ")) : null)
-                .bookAuthor(book.getAuthors() != null && !book.getAuthors().isEmpty() ? book.getAuthors().stream().map(Author::getName).collect(Collectors.joining(", ")) : null)
+
+                .genres(book.getGenres() != null
+                        ? book.getGenres().stream().map(Genre::getName).collect(Collectors.joining(", "))
+                        : "")
+                .bookAuthor(book.getAuthors() != null && !book.getAuthors().isEmpty()
+                        ? book.getAuthors().stream()
+                        .map(a -> a.getName() + " " + a.getLastname())
+                        .collect(Collectors.joining(", "))
+                        : "Автор не указан")
                 .build();
     }
 

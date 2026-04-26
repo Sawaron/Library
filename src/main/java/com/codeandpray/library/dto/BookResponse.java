@@ -12,7 +12,6 @@ public class BookResponse {
     String publishDate;
     int pageCount;
     String language;
-    float price;
     boolean hasAudiobook;
     Integer readingTime;
     String ageCategory;
