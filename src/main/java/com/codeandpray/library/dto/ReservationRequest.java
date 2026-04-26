@@ -15,4 +15,7 @@ public class ReservationRequest {
     @NotNull(message = "Reader ID is required")
     @JsonProperty("user_id")
     private Long readerId;
+
+    private java.time.LocalDateTime reservationDate;
+    private String status;
 }
