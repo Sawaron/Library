@@ -76,10 +76,22 @@ public class ReservationService {
     @Transactional
     public ReservationResponse update(Long id, ReservationRequest request) {
         Reservation res = reservationRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Reservation not found"));
+                .orElseThrow(() -> new RuntimeException("Reservation not found with ID: " + id));
 
+        if (request.getReservationDate() != null) {
+            res.setReservationDate(request.getReservationDate());
+        }
 
-        return reservationMapper.toResponse(reservationRepository.save(res));
+        if (request.getStatus() != null) {
+            try {
+                res.setStatus(ReservationStatus.valueOf(request.getStatus()));
+            } catch (IllegalArgumentException e) {
+                throw new RuntimeException("Invalid status: " + request.getStatus());
+            }
+        }
+
+        Reservation updated = reservationRepository.save(res);
+        return reservationMapper.toResponse(updated);
     }
 
     @Transactional

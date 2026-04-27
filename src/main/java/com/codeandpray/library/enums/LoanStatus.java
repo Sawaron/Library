@@ -7,5 +7,6 @@ public enum LoanStatus {
     @Enumerated(EnumType.STRING)
     ISSUED,
     OVERDUE,
+    CANCELLED,
     RETURNED
 }

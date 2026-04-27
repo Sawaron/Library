@@ -7,11 +7,15 @@ import com.codeandpray.library.mapper.FineMapper;
 import com.codeandpray.library.repo.FineRepo;
 import com.codeandpray.library.repo.LoanRepo;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -20,6 +24,9 @@ public class FineService {
     private final FineRepo fineRepo;
     private final LoanRepo loanRepo;
     private final FineMapper fineMapper;
+
+    @Value("${library.fine.daily-rate:1.0}")
+    private double dailyFineRate;
 
     @Transactional(readOnly = true)
     public PageResponse<FineResponse> findAll(int page, int size) {
@@ -68,5 +75,30 @@ public class FineService {
             throw new RuntimeException("Fine not found");
         }
         fineRepo.deleteById(id);
+    }
+
+    @Transactional
+    public void generateOverDueFine(Loan loan) {
+        LocalDate today = LocalDate.now();
+        LocalDate returnDate = loan.getReturnDate();
+
+        if (returnDate == null) {
+            throw new RuntimeException("Loan return date is null");
+        }
+
+        long daysOverdue = ChronoUnit.DAYS.between(returnDate, today);
+
+        if (daysOverdue > 0) {
+            double amount = daysOverdue * dailyFineRate;
+
+            Fine fine = new Fine();
+            fine.setLoan(loan);
+            fine.setAmount(BigDecimal.valueOf(amount));
+            fine.setReason("Overdue: " + daysOverdue + " days past return date");
+            fine.setCreatedAt(LocalDateTime.now());
+            fine.setStatus(FineStatus.UNPAID);
+
+            fineRepo.save(fine);
+        }
     }
 }

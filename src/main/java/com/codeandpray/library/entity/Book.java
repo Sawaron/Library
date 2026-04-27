@@ -25,10 +25,10 @@ public class Book {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "text")
     private String title;
 
-    @Column(length = 1000)
+    @Column(length = 1000, columnDefinition = "text")
     private String description;
 
     @CreationTimestamp
@@ -38,7 +38,7 @@ public class Book {
     @Column(name = "page_count", nullable = false)
     private int pageCount;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "text")
     private String language;
 
     private float price;
@@ -53,12 +53,12 @@ public class Book {
     @Column(name = "age_category")
     private AgeCategory ageCategory;
 
-    @Column(unique = true, nullable = false)
+    @Column(unique = true, nullable = false, columnDefinition = "text")
     private String isbn;
 
     private int count;
 
-    @Builder.Default // Критично для работы Builder с дефолтными значениями
+    @Builder.Default
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "book_genre",
@@ -67,7 +67,7 @@ public class Book {
     )
     private Set<Genre> genres = new HashSet<>();
 
-    @Builder.Default // Критично для работы Builder
+    @Builder.Default
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "book_author",

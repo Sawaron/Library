@@ -12,15 +12,15 @@
     public interface BookRepo extends JpaRepository<Book, Long> {
 
         @Query("""
-        SELECT DISTINCT b FROM Book b
-        LEFT JOIN b.authors a
-        LEFT JOIN b.genres g
-        WHERE (:title IS NULL OR LOWER(b.title) LIKE LOWER(CONCAT('%', :title, '%')))
-          AND (:author IS NULL OR LOWER(a.name) LIKE LOWER(CONCAT('%', :author, '%')))
-          AND (:genre IS NULL OR LOWER(g.name) LIKE LOWER(CONCAT('%', :genre, '%')))
-          AND (:isbn IS NULL OR b.isbn = :isbn)
-          AND (:status IS NULL OR b.status = :status)
-    """)
+    SELECT DISTINCT b FROM Book b
+    LEFT JOIN b.authors a
+    LEFT JOIN b.genres g
+    WHERE (:title IS NULL OR LOWER(CAST(b.title AS string)) LIKE LOWER(CONCAT('%', CAST(:title AS string), '%')))
+      AND (:author IS NULL OR LOWER(CAST(a.name AS string)) LIKE LOWER(CONCAT('%', CAST(:author AS string), '%')))
+      AND (:genre IS NULL OR LOWER(CAST(g.name AS string)) LIKE LOWER(CONCAT('%', CAST(:genre AS string), '%')))
+      AND (:isbn IS NULL OR b.isbn = :isbn)
+      AND (:status IS NULL OR b.status = :status)
+""")
         Page<Book> findAllByFilters(
                 @Param("title") String title,
                 @Param("author") String author,

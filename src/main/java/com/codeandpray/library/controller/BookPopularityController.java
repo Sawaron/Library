@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/book-popularities")
+@RequestMapping("/api/v1/book-popularities")
 @RequiredArgsConstructor
 public class BookPopularityController {
 
