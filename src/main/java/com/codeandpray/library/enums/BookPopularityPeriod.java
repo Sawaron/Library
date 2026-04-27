@@ -1,5 +1,6 @@
 package com.codeandpray.library.enums;
 
+
 public enum BookPopularityPeriod {
     DAY,
     WEEK,
