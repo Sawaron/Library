@@ -29,5 +29,7 @@ public class Loan {
     private LocalDate loanDate;
     private LocalDate returnDate;
     private LocalDate actualReturnDate;
+
+    @Enumerated(EnumType.STRING)
     private LoanStatus status;
 }

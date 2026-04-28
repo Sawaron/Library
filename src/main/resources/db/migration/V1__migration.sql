@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS public.users (
                                             user_phone VARCHAR(255),
                                             user_password VARCHAR(255),
                                             user_registration_date DATE,
-                                            user_role VARCHAR(100) -- Обычно ROLE_USER, ROLE_ADMIN
+                                            user_role VARCHAR(100)
 );
 
 CREATE TABLE IF NOT EXISTS public.book (
@@ -35,8 +35,8 @@ CREATE TABLE IF NOT EXISTS public.book (
 );
 
 CREATE TABLE IF NOT EXISTS public.genre (
-                                     id SERIAL PRIMARY KEY,
-                                     name VARCHAR(255) NOT NULL
+                                     id BIGSERIAL PRIMARY KEY,
+                                     genre_name VARCHAR(255) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS public.book_author (
@@ -103,3 +103,12 @@ CREATE TABLE IF NOT EXISTS public.reviews (
                                               comment VARCHAR(1000),
                                               created_at TIMESTAMP NOT NULL
 );
+CREATE TABLE IF NOT EXISTS public.editions (
+                                               id BIGSERIAL PRIMARY KEY,
+                                               book_id BIGINT NOT NULL,
+                                               edition_number INTEGER NOT NULL,
+                                               publisher VARCHAR(255) NOT NULL,
+                                               publish_date DATE NOT NULL,
+
+    CONSTRAINT fk_editions_book FOREIGN KEY (book_id) REFERENCES public.book(id) ON DELETE CASCADE
+    );
