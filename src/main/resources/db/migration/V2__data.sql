@@ -1,4 +1,4 @@
--- Добавление 10 авторов
+
 INSERT INTO public.author (name, lastname, birth_date, death_date) VALUES
                                                                        ('Lev', 'Tolstoy', '1828-09-09', '1910-11-20'),
                                                                        ('Ernest', 'Hemingway', '1899-07-21', '1961-07-02'),
@@ -11,7 +11,7 @@ INSERT INTO public.author (name, lastname, birth_date, death_date) VALUES
                                                                        ('Ray', 'Bradbury', '1920-08-22', '2012-06-05'),
                                                                        ('Virginia', 'Woolf', '1882-01-25', '1941-03-28');
 
--- Очисти старый запрос INSERT INTO public.book и замени на этот:
+
 INSERT INTO public.book (title, description, publish_date, page_count, language, price, has_audiobook, reader_time, age_category, isbn, count, status, updated_at)
 VALUES
     ('War and Peace', 'Epic historical novel.', '1869-01-01', 1225, 'Russian', 25.99, TRUE, 3000, 'TWELVE_PLUS', '978-0140447934', 10, 'AVAILABLE', NOW()),
@@ -25,10 +25,10 @@ VALUES
     ('Fahrenheit 451', 'Dystopian future where books are burned.', '1953-10-19', 158, 'English', 11.00, TRUE, 200, 'TWELVE_PLUS', '978-1451673319', 14, 'AVAILABLE', NOW()),
     ('Mrs Dalloway', 'A day in the life of Clarissa Dalloway.', '1925-05-14', 194, 'English', 13.00, FALSE, 250, 'SIXTEEN_PLUS', '978-0156628709', 4, 'AVAILABLE', NOW());
 
-INSERT INTO public.genre (name) VALUES
+INSERT INTO public.genre (genre_name) VALUES
                                     ('Classic'), ('Horror'), ('Mystery'), ('Modernism'), ('Dystopia'), ('Fantasy'), ('Magical Realism');
 
--- Связывание Книг с Авторами (безопасный способ через подзапросы)
+
 INSERT INTO public.book_author (book_id, author_id) VALUES
                                                         ((SELECT id FROM public.book WHERE title = 'War and Peace'), (SELECT id FROM public.author WHERE lastname = 'Tolstoy')),
                                                         ((SELECT id FROM public.book WHERE title = 'The Old Man and the Sea'), (SELECT id FROM public.author WHERE lastname = 'Hemingway')),
@@ -42,17 +42,31 @@ INSERT INTO public.book_author (book_id, author_id) VALUES
                                                         ((SELECT id FROM public.book WHERE title = 'Mrs Dalloway'), (SELECT id FROM public.author WHERE lastname = 'Woolf'));
 
 INSERT INTO public.book_genre (book_id, genre_id) VALUES
-                                                      ((SELECT id FROM public.book WHERE title = 'War and Peace'), (SELECT id FROM public.genre WHERE name = 'Classic')),
-                                                      ((SELECT id FROM public.book WHERE title = 'The Old Man and the Sea'), (SELECT id FROM public.genre WHERE name = 'Classic')),
-                                                      ((SELECT id FROM public.book WHERE title = 'The Shining'), (SELECT id FROM public.genre WHERE name = 'Horror')),
-                                                      ((SELECT id FROM public.book WHERE title = 'Murder on the Orient Express'), (SELECT id FROM public.genre WHERE name = 'Mystery')),
-                                                      ((SELECT id FROM public.book WHERE title = 'Generation P'), (SELECT id FROM public.genre WHERE name = 'Modernism')),
-                                                      ((SELECT id FROM public.book WHERE title = 'One Hundred Years of Solitude'), (SELECT id FROM public.genre WHERE name = 'Magical Realism')),
-                                                      ((SELECT id FROM public.book WHERE title = 'The Hobbit'), (SELECT id FROM public.genre WHERE name = 'Fantasy')),
-                                                      ((SELECT id FROM public.book WHERE title = 'Fahrenheit 451'), (SELECT id FROM public.genre WHERE name = 'Dystopia'));
+                                                      ((SELECT id FROM public.book WHERE title = 'War and Peace'), (SELECT id FROM public.genre WHERE genre_name = 'Classic')),
+                                                      ((SELECT id FROM public.book WHERE title = 'The Old Man and the Sea'), (SELECT id FROM public.genre WHERE genre_name = 'Classic')),
+                                                      ((SELECT id FROM public.book WHERE title = 'The Shining'), (SELECT id FROM public.genre WHERE genre_name = 'Horror')),
+                                                      ((SELECT id FROM public.book WHERE title = 'Murder on the Orient Express'), (SELECT id FROM public.genre WHERE genre_name = 'Mystery')),
+                                                      ((SELECT id FROM public.book WHERE title = 'Generation P'), (SELECT id FROM public.genre WHERE genre_name = 'Modernism')),
+                                                      ((SELECT id FROM public.book WHERE title = 'One Hundred Years of Solitude'), (SELECT id FROM public.genre WHERE genre_name = 'Magical Realism')),
+                                                      ((SELECT id FROM public.book WHERE title = 'The Hobbit'), (SELECT id FROM public.genre WHERE genre_name = 'Fantasy')),
+                                                      ((SELECT id FROM public.book WHERE title = 'Fahrenheit 451'), (SELECT id FROM public.genre WHERE genre_name = 'Dystopia'));
 
 INSERT INTO public.users (user_name, user_lastname, user_email, user_phone, user_password, user_registration_date, user_role) VALUES
     ('Test', 'User', 'test@example.com', '1234567', 'pass', '2023-10-01', 'USER');
 
 INSERT INTO public.loans (book_id, user_id, loan_date, return_date, status) VALUES
     ((SELECT id FROM public.book WHERE title = 'The Hobbit'), (SELECT user_id FROM public.users WHERE user_email = 'test@example.com'), '2023-11-01', '2023-11-15', 'ISSUED');
+
+INSERT INTO public.editions (book_id, edition_number, publisher, publish_date) VALUES
+    ((SELECT id FROM public.book WHERE title = 'War and Peace'), 1, 'The Russian Messenger', '1869-01-01'),
+    ((SELECT id FROM public.book WHERE title = 'The Old Man and the Sea'), 1, 'Charles Scribner''s Sons', '1952-09-01'),
+    ((SELECT id FROM public.book WHERE title = 'The Shining'), 1, 'Doubleday', '1977-01-28'),
+    ((SELECT id FROM public.book WHERE title = 'The Shining'), 2, 'New English Library', '1980-05-15'),
+    ((SELECT id FROM public.book WHERE title = 'Murder on the Orient Express'), 1, 'Collins Crime Club', '1934-01-01'),
+    ((SELECT id FROM public.book WHERE title = 'Generation P'), 1, 'Vagrius', '1999-01-01'),
+    ((SELECT id FROM public.book WHERE title = 'Norwegian Wood'), 1, 'Kodansha', '1987-09-04'),
+    ((SELECT id FROM public.book WHERE title = 'One Hundred Years of Solitude'), 1, 'Editorial Sudamericana', '1967-05-30'),
+    ((SELECT id FROM public.book WHERE title = 'The Hobbit'), 1, 'George Allen & Unwin', '1937-09-21'),
+    ((SELECT id FROM public.book WHERE title = 'The Hobbit'), 4, 'HarperCollins', '2012-09-18'),
+    ((SELECT id FROM public.book WHERE title = 'Fahrenheit 451'), 1, 'Ballantine Books', '1953-10-19'),
+    ((SELECT id FROM public.book WHERE title = 'Mrs Dalloway'), 1, 'Hogarth Press', '1925-05-14');
