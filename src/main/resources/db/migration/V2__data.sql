@@ -51,8 +51,8 @@ INSERT INTO public.book_genre (book_id, genre_id) VALUES
                                                       ((SELECT id FROM public.book WHERE title = 'The Hobbit'), (SELECT id FROM public.genre WHERE genre_name = 'Fantasy')),
                                                       ((SELECT id FROM public.book WHERE title = 'Fahrenheit 451'), (SELECT id FROM public.genre WHERE genre_name = 'Dystopia'));
 
-INSERT INTO public.users (user_name, user_lastname, user_email, user_phone, user_password, user_registration_date, user_role) VALUES
-    ('Test', 'User', 'test@example.com', '1234567', 'pass', '2023-10-01', 'USER');
+INSERT INTO public.users (user_name, user_lastname, user_email, user_phone, user_password, user_registration_date, user_role)
+VALUES ('Test', 'User', 'test@example.com', '1234567', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.TVuHOn2', '2023-10-01', 'READER');
 
 INSERT INTO public.loans (book_id, user_id, loan_date, return_date, status) VALUES
     ((SELECT id FROM public.book WHERE title = 'The Hobbit'), (SELECT user_id FROM public.users WHERE user_email = 'test@example.com'), '2023-11-01', '2023-11-15', 'ISSUED');
