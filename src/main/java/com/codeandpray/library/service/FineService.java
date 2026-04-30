@@ -6,20 +6,37 @@ import com.codeandpray.library.enums.FineStatus;
 import com.codeandpray.library.mapper.FineMapper;
 import com.codeandpray.library.repo.FineRepo;
 import com.codeandpray.library.repo.LoanRepo;
-import lombok.RequiredArgsConstructor;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 @Service
-@RequiredArgsConstructor
 public class FineService {
 
     private final FineRepo fineRepo;
     private final LoanRepo loanRepo;
     private final FineMapper fineMapper;
+    private final Counter finesCreated;
+
+    @Value("${library.fine.daily-rate:1.0}")
+    private double dailyFineRate;
+
+    public FineService(FineRepo fineRepo, LoanRepo loanRepo,
+                       FineMapper fineMapper, MeterRegistry meterRegistry) {
+        this.fineRepo     = fineRepo;
+        this.loanRepo     = loanRepo;
+        this.fineMapper   = fineMapper;
+        this.finesCreated = Counter.builder("library.fines.created")
+                .description("Количество выставленных штрафов").register(meterRegistry);
+    }
 
     @Transactional(readOnly = true)
     public PageResponse<FineResponse> findAll(int page, int size) {
@@ -36,7 +53,6 @@ public class FineService {
 
     @Transactional
     public FineResponse save(FineRequest dto) {
-        // Защита: нельзя создать штраф без существующей выдачи
         Loan loan = loanRepo.findById(dto.getLoanId())
                 .orElseThrow(() -> new RuntimeException("Loan not found"));
 
@@ -47,7 +63,9 @@ public class FineService {
         fine.setCreatedAt(LocalDateTime.now());
         fine.setStatus(FineStatus.UNPAID);
 
-        return fineMapper.toResponse(fineRepo.save(fine));
+        FineResponse response = fineMapper.toResponse(fineRepo.save(fine));
+        finesCreated.increment();
+        return response;
     }
 
     @Transactional
@@ -68,5 +86,31 @@ public class FineService {
             throw new RuntimeException("Fine not found");
         }
         fineRepo.deleteById(id);
+    }
+
+    @Transactional
+    public void generateOverDueFine(Loan loan) {
+        LocalDate today = LocalDate.now();
+        LocalDate returnDate = loan.getReturnDate();
+
+        if (returnDate == null) {
+            throw new RuntimeException("Loan return date is null");
+        }
+
+        long daysOverdue = ChronoUnit.DAYS.between(returnDate, today);
+
+        if (daysOverdue > 0) {
+            double amount = daysOverdue * dailyFineRate;
+
+            Fine fine = new Fine();
+            fine.setLoan(loan);
+            fine.setAmount(BigDecimal.valueOf(amount));
+            fine.setReason("Overdue: " + daysOverdue + " days past return date");
+            fine.setCreatedAt(LocalDateTime.now());
+            fine.setStatus(FineStatus.UNPAID);
+
+            fineRepo.save(fine);
+            finesCreated.increment();
+        }
     }
 }

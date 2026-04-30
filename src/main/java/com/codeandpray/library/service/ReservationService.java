@@ -7,11 +7,12 @@ import com.codeandpray.library.entity.Book;
 import com.codeandpray.library.entity.Reservation;
 import com.codeandpray.library.entity.User;
 import com.codeandpray.library.enums.ReservationStatus;
-import com.codeandpray.library.mapper.ReservationMapper; // Импортируем твой маппер
+import com.codeandpray.library.mapper.ReservationMapper;
 import com.codeandpray.library.repo.BookRepo;
 import com.codeandpray.library.repo.ReservationRepo;
 import com.codeandpray.library.repo.UserRepo;
-import lombok.RequiredArgsConstructor;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -21,13 +22,28 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 
 @Service
-@RequiredArgsConstructor
 public class ReservationService {
 
     private final ReservationRepo reservationRepository;
     private final BookRepo bookRepository;
     private final UserRepo userRepository;
     private final ReservationMapper reservationMapper;
+
+    private final Counter reservationsCreated;
+    private final Counter reservationsCancelled;
+
+    public ReservationService(ReservationRepo reservationRepository, BookRepo bookRepository,
+                              UserRepo userRepository, ReservationMapper reservationMapper,
+                              MeterRegistry meterRegistry) {
+        this.reservationRepository = reservationRepository;
+        this.bookRepository        = bookRepository;
+        this.userRepository        = userRepository;
+        this.reservationMapper     = reservationMapper;
+        this.reservationsCreated   = Counter.builder("library.reservations.created")
+                .description("Количество созданных броней").register(meterRegistry);
+        this.reservationsCancelled = Counter.builder("library.reservations.cancelled")
+                .description("Количество отменённых броней").register(meterRegistry);
+    }
 
     @Transactional
     public ReservationResponse create(ReservationRequest request) {
@@ -51,8 +67,7 @@ public class ReservationService {
         reservation.setStatus(ReservationStatus.ACTIVE);
 
         Reservation saved = reservationRepository.save(reservation);
-
-
+        reservationsCreated.increment();
         return reservationMapper.toResponse(saved);
     }
 
@@ -60,7 +75,6 @@ public class ReservationService {
     public PageResponse<ReservationResponse> getAll(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Reservation> reservationPage = reservationRepository.findAll(pageable);
-
 
         Page<ReservationResponse> responsePage = reservationPage.map(reservationMapper::toResponse);
         return PageResponse.of(responsePage);
@@ -110,7 +124,6 @@ public class ReservationService {
         bookRepository.save(book);
 
         reservationRepository.save(res);
+        reservationsCancelled.increment();
     }
-
-
 }
