@@ -3,9 +3,11 @@ package com.codeandpray.library.service;
 import com.codeandpray.library.entity.Notification;
 import com.codeandpray.library.repo.NotificationRepo;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Transactional
 @Service
 public class NotificationService {
 
@@ -34,7 +36,10 @@ public class NotificationService {
     }
 
     public Notification getById(Long id) {
-        return repo.findById(id).orElseThrow();
+        return repo.findById(id).orElseThrow(() -> new RuntimeException("Notification not found with id: " + id));
+
+
+
     }
 
     public Notification update(Long id, Notification newData) {
