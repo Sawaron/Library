@@ -6,8 +6,9 @@ import com.codeandpray.library.dto.ReservationResponse;
 import com.codeandpray.library.entity.Book;
 import com.codeandpray.library.entity.Reservation;
 import com.codeandpray.library.entity.User;
+import com.codeandpray.library.enums.BookStatus;
 import com.codeandpray.library.enums.ReservationStatus;
-import com.codeandpray.library.mapper.ReservationMapper; // Импортируем твой маппер
+import com.codeandpray.library.mapper.ReservationMapper;
 import com.codeandpray.library.repo.BookRepo;
 import com.codeandpray.library.repo.ReservationRepo;
 import com.codeandpray.library.repo.UserRepo;
@@ -47,11 +48,14 @@ public class ReservationService {
         Reservation reservation = new Reservation();
         reservation.setBook(book);
         reservation.setUser(user);
-        reservation.setReservationDate(LocalDateTime.now());
+
+        LocalDateTime now = LocalDateTime.now();
+
+        reservation.setReservationDate(now);
+        reservation.setAvailableDate(now);
         reservation.setStatus(ReservationStatus.ACTIVE);
 
         Reservation saved = reservationRepository.save(reservation);
-
 
         return reservationMapper.toResponse(saved);
     }
@@ -61,8 +65,8 @@ public class ReservationService {
         Pageable pageable = PageRequest.of(page, size);
         Page<Reservation> reservationPage = reservationRepository.findAll(pageable);
 
-
         Page<ReservationResponse> responsePage = reservationPage.map(reservationMapper::toResponse);
+
         return PageResponse.of(responsePage);
     }
 
@@ -75,42 +79,46 @@ public class ReservationService {
 
     @Transactional
     public ReservationResponse update(Long id, ReservationRequest request) {
-        Reservation res = reservationRepository.findById(id)
+        Reservation reservation = reservationRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Reservation not found with ID: " + id));
 
         if (request.getReservationDate() != null) {
-            res.setReservationDate(request.getReservationDate());
+            reservation.setReservationDate(request.getReservationDate());
+        }
+
+        if (request.getAvailableDate() != null) {
+            reservation.setAvailableDate(request.getAvailableDate());
         }
 
         if (request.getStatus() != null) {
             try {
-                res.setStatus(ReservationStatus.valueOf(request.getStatus()));
+                reservation.setStatus(ReservationStatus.valueOf(request.getStatus()));
             } catch (IllegalArgumentException e) {
                 throw new RuntimeException("Invalid status: " + request.getStatus());
             }
         }
 
-        Reservation updated = reservationRepository.save(res);
+        Reservation updated = reservationRepository.save(reservation);
+
         return reservationMapper.toResponse(updated);
     }
 
     @Transactional
     public void cancel(Long id) {
-        Reservation res = reservationRepository.findById(id)
+        Reservation reservation = reservationRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Reservation not found"));
 
-        if (res.getStatus() == ReservationStatus.CANCELLED) {
+        if (reservation.getStatus() == ReservationStatus.CANCELLED) {
             throw new RuntimeException("Already cancelled");
         }
 
-        res.setStatus(ReservationStatus.CANCELLED);
+        reservation.setStatus(ReservationStatus.CANCELLED);
 
-        Book book = res.getBook();
+        Book book = reservation.getBook();
         book.setCount(book.getCount() + 1);
+        book.setStatus(BookStatus.AVAILABLE);
+
         bookRepository.save(book);
-
-        reservationRepository.save(res);
+        reservationRepository.save(reservation);
     }
-
-
 }

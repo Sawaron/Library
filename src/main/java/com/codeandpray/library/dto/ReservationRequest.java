@@ -1,14 +1,14 @@
 package com.codeandpray.library.dto;
 
-
-
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
+import java.time.LocalDateTime;
+
 @Data
 public class ReservationRequest {
+
     @NotNull(message = "Book ID is required")
     private Long bookId;
 
@@ -16,6 +16,8 @@ public class ReservationRequest {
     @JsonProperty("user_id")
     private Long readerId;
 
-    private java.time.LocalDateTime reservationDate;
+    private LocalDateTime reservationDate;
+    private LocalDateTime availableDate;
+
     private String status;
 }

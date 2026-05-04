@@ -10,6 +10,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Builder
 public class UserResponse {
+
     private Long id;
 
     private String firstname;
@@ -17,6 +18,8 @@ public class UserResponse {
 
     private String email;
     private String phone;
+
+    private LocalDate birthDate;
 
     private LocalDate registrationDate;
 
