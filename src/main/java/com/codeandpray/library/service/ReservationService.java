@@ -9,10 +9,16 @@ import com.codeandpray.library.entity.User;
 import com.codeandpray.library.enums.BookStatus;
 import com.codeandpray.library.enums.ReservationStatus;
 import com.codeandpray.library.mapper.ReservationMapper;
+import com.codeandpray.library.exception.entity.BookNotFoundException;
+import com.codeandpray.library.exception.entity.ReservationNotFoundException;
+import com.codeandpray.library.exception.entity.UserNotFoundException;
+import com.codeandpray.library.exception.logic.LogicBadRequestException;
+import com.codeandpray.library.mapper.ReservationMapper; // Импортируем твой маппер
 import com.codeandpray.library.repo.BookRepo;
 import com.codeandpray.library.repo.ReservationRepo;
 import com.codeandpray.library.repo.UserRepo;
 import lombok.RequiredArgsConstructor;
+import org.apache.juli.logging.LogConfigurationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -33,10 +39,14 @@ public class ReservationService {
     @Transactional
     public ReservationResponse create(ReservationRequest request) {
         Book book = bookRepository.findById(request.getBookId())
-                .orElseThrow(() -> new RuntimeException("Book not found"));
+                .orElseThrow(() -> new BookNotFoundException("Книга с ID: " + request.getBookId() + " не найдена"));
+
+        if (book.getCount() <= 0) {
+            throw new LogicBadRequestException("Все экземпляры книги заняты резервирование невозможно", "BOOK_NOT_AVAILABLE");
+        }
 
         User user = userRepository.findById(request.getReaderId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("Пользователь c ID: " + request.getReaderId() + " не найден"));
 
         int updatedRows = bookRepository.decrementCountIfAvailable(book.getId());
 
@@ -73,13 +83,15 @@ public class ReservationService {
     public ReservationResponse getById(Long id) {
         return reservationRepository.findById(id)
                 .map(reservationMapper::toResponse)
-                .orElseThrow(() -> new RuntimeException("Reservation not found"));
+                .orElseThrow(() -> new ReservationNotFoundException("Резервирование с ID: " + id + " не найдено"));
     }
 
     @Transactional
     public ReservationResponse update(Long id, ReservationRequest request) {
         Reservation reservation = reservationRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Reservation not found with ID: " + id));
+        Reservation res = reservationRepository.findById(id)
+                .orElseThrow(() -> new ReservationNotFoundException("Резервирование с ID: " + id + " не найдено"));
 
         if (request.getReservationDate() != null) {
             reservation.setReservationDate(request.getReservationDate());
@@ -93,7 +105,7 @@ public class ReservationService {
             try {
                 reservation.setStatus(ReservationStatus.valueOf(request.getStatus()));
             } catch (IllegalArgumentException e) {
-                throw new RuntimeException("Invalid status: " + request.getStatus());
+                throw new LogicBadRequestException("Передан недопустимый статус: " + request.getStatus(), "INVALID_STATUS");
             }
         }
 
@@ -109,6 +121,11 @@ public class ReservationService {
 
         if (reservation.getStatus() == ReservationStatus.CANCELLED) {
             throw new RuntimeException("Already cancelled");
+        Reservation res = reservationRepository.findById(id)
+                .orElseThrow(() -> new ReservationNotFoundException("Резервирование с ID: " + id + " не найдено"));
+
+        if (res.getStatus() == ReservationStatus.CANCELLED) {
+            throw new LogicBadRequestException("Это резервирование уже было отменено ранее: ", "RESERVATION_ALREADY_CANCELLED");
         }
 
         reservation.setStatus(ReservationStatus.CANCELLED);

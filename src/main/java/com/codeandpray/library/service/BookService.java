@@ -4,11 +4,13 @@ import com.codeandpray.library.catalog.Genre;
 import com.codeandpray.library.dto.*;
 import com.codeandpray.library.entity.*;
 import com.codeandpray.library.enums.BookStatus;
+import com.codeandpray.library.exception.entity.BookNotFoundException;
 import com.codeandpray.library.mapper.BookMapper;
 import com.codeandpray.library.repo.*;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -40,7 +42,7 @@ public class BookService {
     @Transactional(readOnly = true)
     public Book getById(Long id) {
         return bookRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Book not found"));
+                .orElseThrow(() -> new BookNotFoundException("Книга с ID: " + id + " не найдена"));
     }
 
     @Transactional
