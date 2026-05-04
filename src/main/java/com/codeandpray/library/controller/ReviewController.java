@@ -39,6 +39,6 @@ public class ReviewController {
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {
-        reviewService.delete(id);
+        reviewService.deleteById(id);
     }
 }
