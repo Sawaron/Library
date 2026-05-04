@@ -4,6 +4,7 @@ import com.codeandpray.library.entity.Book;
 import com.codeandpray.library.enums.BookStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -36,13 +37,20 @@ public interface BookRepo extends JpaRepository<Book, Long> {
     );
 
     @Query("""
-           SELECT b FROM Book b 
-           WHERE (:title IS NULL OR LOWER(b.title) LIKE LOWER(CONCAT('%', :title, '%')))
-             AND (:author IS NULL OR EXISTS (SELECT a FROM b.authors a WHERE LOWER(a.name) LIKE LOWER(CONCAT('%', :author, '%'))))
-             AND (:genre IS NULL OR EXISTS (SELECT g FROM b.genres g WHERE LOWER(g.name) LIKE LOWER(CONCAT('%', :genre, '%'))))
-             AND (:isbn IS NULL OR b.isbn = :isbn)
-             AND (:status IS NULL OR b.status = :status)
-           """)
+       SELECT b FROM Book b 
+       WHERE (:title IS NULL OR LOWER(CAST(b.title AS String)) LIKE LOWER(CONCAT('%', CAST(:title AS String), '%')))
+         AND (:author IS NULL OR EXISTS (
+                SELECT a FROM b.authors a 
+                WHERE LOWER(CAST(a.name AS String)) LIKE LOWER(CONCAT('%', CAST(:author AS String), '%'))
+             ))
+         AND (:genre IS NULL OR EXISTS (
+                SELECT g FROM b.genres g 
+                WHERE LOWER(CAST(g.name AS String)) LIKE LOWER(CONCAT('%', CAST(:genre AS String), '%'))
+             ))
+         AND (:isbn IS NULL OR CAST(b.isbn AS String) = CAST(:isbn AS String))
+         AND (:status IS NULL OR b.status = :status)
+       """)
+    @EntityGraph(attributePaths = {"authors", "genres"})
     Page<Book> findAllByFilters(
             @Param("title") String title,
             @Param("author") String author,
