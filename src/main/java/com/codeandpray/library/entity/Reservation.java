@@ -1,6 +1,5 @@
 package com.codeandpray.library.entity;
 
-
 import com.codeandpray.library.enums.ReservationStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -8,9 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-
 import java.time.LocalDateTime;
-
 
 @Table
 @Entity
@@ -34,8 +31,9 @@ public class Reservation {
 
     private LocalDateTime reservationDate;
 
+    @Column(name = "available_date")
+    private LocalDateTime availableDate;
+
     @Enumerated(EnumType.STRING)
     private ReservationStatus status;
-
-
 }

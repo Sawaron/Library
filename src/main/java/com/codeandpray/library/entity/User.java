@@ -1,6 +1,5 @@
 package com.codeandpray.library.entity;
 
-
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -38,7 +37,9 @@ public class User {
     @Column(name = "user_registration_date")
     private LocalDate registrationDate;
 
+    @Column(name = "user_birth_date")
+    private LocalDate birthDate;
+
     @Column(name = "user_role")
     private String role;
-
 }

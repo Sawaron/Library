@@ -8,13 +8,18 @@ import org.springframework.stereotype.Component;
 public class ReservationMapper {
 
     public ReservationResponse toResponse(Reservation reservation) {
-        if (reservation == null) return null;
+        if (reservation == null) {
+            return null;
+        }
 
         return ReservationResponse.builder()
                 .id(reservation.getId())
-                .bookTitle(reservation.getBook().getTitle()) // Берём заголовок
-                .readerFullName(reservation.getUser().getFirstname() + " " + reservation.getUser().getLastname()) // Склеиваем имя
+                .bookTitle(reservation.getBook().getTitle())
+                .readerFullName(
+                        reservation.getUser().getFirstname() + " " + reservation.getUser().getLastname()
+                )
                 .reservationDate(reservation.getReservationDate())
+                .availableDate(reservation.getAvailableDate())
                 .status(String.valueOf(reservation.getStatus()))
                 .build();
     }

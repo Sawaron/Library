@@ -3,12 +3,16 @@ package com.codeandpray.library.mapper;
 import com.codeandpray.library.dto.UserRequest;
 import com.codeandpray.library.dto.UserResponse;
 import com.codeandpray.library.entity.User;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 
 @Component
 public class UserMapper {
+
+    @Value("${library.user.default-role:READER}")
+    private String defaultUserRole;
 
     public UserResponse toResponse(User user) {
         if (user == null) {
@@ -21,6 +25,7 @@ public class UserMapper {
                 .lastname(user.getLastname())
                 .email(user.getEmail())
                 .phone(user.getPhone())
+                .birthDate(user.getBirthDate())
                 .registrationDate(user.getRegistrationDate())
                 .role(user.getRole())
                 .build();
@@ -36,9 +41,10 @@ public class UserMapper {
                 .lastname(request.getLastname())
                 .email(request.getEmail())
                 .phone(request.getPhone())
+                .birthDate(request.getBirthDate())
                 .password(request.getPassword())
                 .registrationDate(LocalDate.now())
-                .role("READER")
+                .role(defaultUserRole)
                 .build();
     }
 
@@ -51,6 +57,7 @@ public class UserMapper {
         user.setLastname(request.getLastname());
         user.setEmail(request.getEmail());
         user.setPhone(request.getPhone());
+        user.setBirthDate(request.getBirthDate());
 
         if (request.getPassword() != null && !request.getPassword().isBlank()) {
             user.setPassword(request.getPassword());
