@@ -4,6 +4,7 @@ import com.codeandpray.library.dto.CreateEditionRequest;
 import com.codeandpray.library.dto.UpdateEditionRequest;
 import com.codeandpray.library.entity.Book;
 import com.codeandpray.library.catalog.Edition;
+import com.codeandpray.library.exception.entity.EditionNotFoundException;
 import com.codeandpray.library.mapper.EditionMapper;
 import com.codeandpray.library.repo.EditionRepo;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +29,7 @@ public class EditionService {
     @Transactional(readOnly = true)
     public Edition getById(Long id) {
         return editionRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Edition not found"));
+                .orElseThrow(() -> new EditionNotFoundException("Версия с таким ID: "+ id + " не найдена"));
     }
 
     @Transactional
