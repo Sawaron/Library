@@ -14,6 +14,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -42,28 +44,41 @@ public class SyncExpiredReservationsJob {
                 reservationExpireBatchSize
         );
 
-        int shiftedBooks = 0;
-
-        for (Reservation reservation : expiredReservations) {
-            reservation.setStatus(ReservationStatus.EXPIRED);
-
-            Book book = reservation.getBook();
-
-            if (book != null) {
-                book.setCount(book.getCount() + 1);
-                book.setStatus(BookStatus.AVAILABLE);
-
-                bookRepo.save(book);
-                shiftedBooks++;
-            }
+        if (expiredReservations.isEmpty()) {
+            log.info("Expired reservations sync finished: no expired reservations found");
+            return;
         }
+
+        Map<Long, Long> expiredCountByBookId = expiredReservations.stream()
+                .filter(reservation -> reservation.getBook() != null)
+                .collect(Collectors.groupingBy(
+                        reservation -> reservation.getBook().getId(),
+                        Collectors.counting()
+                ));
+
+        expiredReservations.forEach(reservation ->
+                reservation.setStatus(ReservationStatus.EXPIRED)
+        );
 
         reservationRepo.saveAll(expiredReservations);
 
+        int updatedBooks = 0;
+
+        for (Map.Entry<Long, Long> entry : expiredCountByBookId.entrySet()) {
+            Long bookId = entry.getKey();
+            int delta = Math.toIntExact(entry.getValue());
+
+            updatedBooks += bookRepo.incrementCount(
+                    bookId,
+                    delta,
+                    BookStatus.AVAILABLE
+            );
+        }
+
         log.info(
-                "Expired reservations sync finished: expired={}, shiftedBooks={}, expireDays={}, batchSize={}",
+                "Expired reservations sync finished: expired={}, updatedBooks={}, expireDays={}, batchSize={}",
                 expiredReservations.size(),
-                shiftedBooks,
+                updatedBooks,
                 reservationExpireDays,
                 reservationExpireBatchSize
         );

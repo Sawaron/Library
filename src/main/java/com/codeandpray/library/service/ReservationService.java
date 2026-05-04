@@ -35,15 +35,14 @@ public class ReservationService {
         Book book = bookRepository.findById(request.getBookId())
                 .orElseThrow(() -> new RuntimeException("Book not found"));
 
-        if (book.getCount() <= 0) {
-            throw new RuntimeException("No copies available for reservation");
-        }
-
         User user = userRepository.findById(request.getReaderId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        book.setCount(book.getCount() - 1);
-        bookRepository.save(book);
+        int updatedRows = bookRepository.decrementCountIfAvailable(book.getId());
+
+        if (updatedRows == 0) {
+            throw new RuntimeException("No copies available for reservation");
+        }
 
         Reservation reservation = new Reservation();
         reservation.setBook(book);
@@ -113,12 +112,16 @@ public class ReservationService {
         }
 
         reservation.setStatus(ReservationStatus.CANCELLED);
+        reservationRepository.save(reservation);
 
         Book book = reservation.getBook();
-        book.setCount(book.getCount() + 1);
-        book.setStatus(BookStatus.AVAILABLE);
 
-        bookRepository.save(book);
-        reservationRepository.save(reservation);
+        if (book != null) {
+            bookRepository.incrementCount(
+                    book.getId(),
+                    1,
+                    BookStatus.AVAILABLE
+            );
+        }
     }
 }
