@@ -43,7 +43,6 @@ public class FineService {
 
     @Transactional
     public FineResponse save(FineRequest dto) {
-        // Защита: нельзя создать штраф без существующей выдачи
         Loan loan = loanRepo.findById(dto.getLoanId())
                 .orElseThrow(() -> new RuntimeException("Loan not found"));
 

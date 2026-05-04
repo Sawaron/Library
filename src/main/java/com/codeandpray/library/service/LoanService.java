@@ -91,10 +91,10 @@ public class LoanService {
             throw new RuntimeException("Book is already returned");
         }
 
-//       TODO: Интегрировать метод МухаммадРасула когда он будет готов
-//        if (LocalDate.now().isAfter(loan.getReturnDate())) {
-//             fineService.generateOverdueFine(loan);
-//        }
+
+        if (LocalDate.now().isAfter(loan.getReturnDate())) {
+             fineService.generateOverDueFine(loan);
+        }
 
         loan.setActualReturnDate(LocalDate.now());
         loan.setStatus(LoanStatus.RETURNED);
