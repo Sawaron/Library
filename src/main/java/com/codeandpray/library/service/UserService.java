@@ -3,6 +3,9 @@ package com.codeandpray.library.service;
 import com.codeandpray.library.dto.UserRequest;
 import com.codeandpray.library.dto.UserResponse;
 import com.codeandpray.library.entity.User;
+import com.codeandpray.library.exception.entity.EntityNotFoundException;
+import com.codeandpray.library.exception.entity.UserNotFoundException;
+import com.codeandpray.library.exception.logic.LogicBadRequestException;
 import com.codeandpray.library.mapper.UserMapper;
 import com.codeandpray.library.repo.UserRepo;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +20,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)  // ← По умолчанию readOnly для всех методов поиска
+@Transactional(readOnly = true)
 public class UserService {
 
     private final UserRepo userRepo;
@@ -27,7 +30,7 @@ public class UserService {
         return userRepo.findAll()
                 .stream()
                 .map(userMapper::toResponse)
-                .collect(Collectors.toList());  // ← Заменили toResponseList на stream
+                .collect(Collectors.toList());
     }
 
     public Page<UserResponse> findAllPaginated(Pageable pageable) {
@@ -42,8 +45,8 @@ public class UserService {
         return userRepo.findByLastnameContaining(lastname, pageable).map(userMapper::toResponse);
     }
 
-    public Optional<UserResponse> findById(Long id) {
-        return userRepo.findById(id).map(userMapper::toResponse);
+    public UserResponse findById(Long id) {
+        return userRepo.findById(id).map(userMapper::toResponse).orElseThrow(() -> new UserNotFoundException("Пользователь с ID: " + id + " не найден"));
     }
 
     public Optional<UserResponse> findByName(String name) {
@@ -51,31 +54,37 @@ public class UserService {
     }
 
     public Optional<UserResponse> findByLastname(String lastname) {
-        return userRepo.findByLastname(lastname).map(userMapper::toResponse);  // ← Новый метод
+        return userRepo.findByLastname(lastname).map(userMapper::toResponse);
     }
 
-    @Transactional(readOnly = false)  // ← Переопределяем для записи
+    @Transactional(readOnly = false)
     public UserResponse save(UserRequest request) {
+        if (userRepo.existsByEmail(request.getEmail())) {
+            throw new LogicBadRequestException("Пользователь с таким Email уже существует", "USER_ALREADY_EXISTS");
+        }
+
         User user = userMapper.toEntity(request);
         return userMapper.toResponse(userRepo.save(user));
     }
 
     @Transactional(readOnly = false)
-    public Optional<UserResponse> updateById(Long id, UserRequest updatedRequest) {
-        return userRepo.findById(id)
-                .map(oldUser -> {
-                    userMapper.updateEntity(oldUser, updatedRequest);
-                    return userMapper.toResponse(userRepo.save(oldUser));
-                });
+    public UserResponse updateById(Long id, UserRequest updatedRequest) {
+        User user = userRepo.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("Пользователь с ID: " + id + " не найден"));
+
+
+        if (!user.getEmail().equals(updatedRequest.getEmail()) && userRepo.existsByEmail(updatedRequest.getEmail())) {
+            throw new LogicBadRequestException("Пользователь с таким Email уже существует", "USER_ALREADY_EXISTS");
+        }
+
+        userMapper.updateEntity(user, updatedRequest);
+        return userMapper.toResponse(userRepo.save(user));
     }
 
     @Transactional(readOnly = false)
-    public boolean deleteById(Long id) {
-        return userRepo.findById(id)
-                .map(user -> {
-                    userRepo.delete(user);
-                    return true;
-                })
-                .orElse(false);
+    public void deleteById(Long id) {
+        User user = userRepo.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("Пользователь с ID: " + id + " не найден"));
+        userRepo.delete(user);
     }
 }

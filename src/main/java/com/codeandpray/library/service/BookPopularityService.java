@@ -5,6 +5,7 @@ import com.codeandpray.library.dto.BookPopularityResponse;
 import com.codeandpray.library.entity.Book;
 import com.codeandpray.library.entity.BookPopularity;
 import com.codeandpray.library.enums.BookPopularityPeriod;
+import com.codeandpray.library.exception.entity.BookNotFoundException;
 import com.codeandpray.library.mapper.BookPopularityMapper;
 import com.codeandpray.library.repo.BookPopularityRepo;
 import com.codeandpray.library.repo.BookRepo;
@@ -80,7 +81,7 @@ public class BookPopularityService {
     @Transactional(readOnly = false)
     public BookPopularityResponse save(BookPopularityRequest request) {
         Book book = bookRepo.findById(request.getBookId())
-                .orElseThrow(() -> new RuntimeException("Book not found with id: " + request.getBookId()));
+                .orElseThrow(() -> new BookNotFoundException("Книга с ID: " + request.getBookId() + " не найдена"));
 
         Optional<BookPopularity> existingPopularity = bookPopularityRepo.findByBookIdAndPeriod(
                 request.getBookId(),
@@ -109,7 +110,7 @@ public class BookPopularityService {
                 .map(oldPopularity -> {
                     if (!oldPopularity.getBook().getId().equals(updatedRequest.getBookId())) {
                         Book newBook = bookRepo.findById(updatedRequest.getBookId())
-                                .orElseThrow(() -> new RuntimeException("Book not found"));
+                                .orElseThrow(() -> new BookNotFoundException("Книга с ID: " + updatedRequest.getBookId() + " не найдена"));
                         oldPopularity.setBook(newBook);
                     }
 
@@ -125,13 +126,13 @@ public class BookPopularityService {
                     bookPopularityRepo.delete(popularity);
                     return true;
                 })
-                .orElse(false);
+                .orElseThrow(() -> new BookNotFoundException("Запись о популярности с ID: " + id + " не найдена"));
     }
 
     @Transactional(readOnly = false)
     public void incrementReadCount(Long bookId, BookPopularityPeriod period) {
         Book book = bookRepo.findById(bookId)
-                .orElseThrow(() -> new RuntimeException("Book not found with id: " + bookId));
+                .orElseThrow(() -> new BookNotFoundException("Книга с ID: " + bookId + " не найдена"));
 
         bookPopularityRepo.findByBookIdAndPeriod(bookId, period)
                 .ifPresentOrElse(

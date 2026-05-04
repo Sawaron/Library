@@ -3,6 +3,9 @@ package com.codeandpray.library.service;
 import com.codeandpray.library.dto.*;
 import com.codeandpray.library.entity.*;
 import com.codeandpray.library.enums.FineStatus;
+import com.codeandpray.library.exception.entity.FineNotFoundException;
+import com.codeandpray.library.exception.entity.LoanNotFoundException;
+import com.codeandpray.library.exception.logic.LogicBadRequestException;
 import com.codeandpray.library.mapper.FineMapper;
 import com.codeandpray.library.repo.FineRepo;
 import com.codeandpray.library.repo.LoanRepo;
@@ -38,14 +41,13 @@ public class FineService {
     public FineResponse findById(Long id) {
         return fineRepo.findById(id)
                 .map(fineMapper::toResponse)
-                .orElseThrow(() -> new RuntimeException("Fine not found with ID: " + id));
+                .orElseThrow(() -> new FineNotFoundException("Штраф с ID: " + id + " не найден"));
     }
 
     @Transactional
     public FineResponse save(FineRequest dto) {
-        // Защита: нельзя создать штраф без существующей выдачи
         Loan loan = loanRepo.findById(dto.getLoanId())
-                .orElseThrow(() -> new RuntimeException("Loan not found"));
+                .orElseThrow(() -> new LoanNotFoundException("Заем с ID: " + dto.getLoanId() + " не найден"));
 
         Fine fine = new Fine();
         fine.setLoan(loan);
@@ -60,7 +62,7 @@ public class FineService {
     @Transactional
     public FineResponse update(Long id, FineRequest dto) {
         Fine fine = fineRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Fine not found"));
+                .orElseThrow(() -> new FineNotFoundException("Штраф с ID:" + id + " не найден"));
 
         if (dto.getAmount() != null) fine.setAmount(dto.getAmount());
         if (dto.getReason() != null) fine.setReason(dto.getReason());
@@ -72,7 +74,7 @@ public class FineService {
     @Transactional
     public void deleteById(Long id) {
         if (!fineRepo.existsById(id)) {
-            throw new RuntimeException("Fine not found");
+            throw new FineNotFoundException("Штраф с ID: " + id + " не найден");
         }
         fineRepo.deleteById(id);
     }
@@ -83,7 +85,7 @@ public class FineService {
         LocalDate returnDate = loan.getReturnDate();
 
         if (returnDate == null) {
-            throw new RuntimeException("Loan return date is null");
+            throw new LogicBadRequestException("Невозможно рассчитать штраф: дата возврата займа не установлена", "INVALID_LOAN_STATE");
         }
 
         long daysOverdue = ChronoUnit.DAYS.between(returnDate, today);

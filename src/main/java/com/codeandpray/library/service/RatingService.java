@@ -5,6 +5,9 @@ import com.codeandpray.library.dto.RatingResponse;
 import com.codeandpray.library.entity.Book;
 import com.codeandpray.library.entity.Rating;
 import com.codeandpray.library.entity.User;
+import com.codeandpray.library.exception.entity.BookNotFoundException;
+import com.codeandpray.library.exception.entity.RatingNotFoundException;
+import com.codeandpray.library.exception.entity.UserNotFoundException;
 import com.codeandpray.library.mapper.RatingMapper;
 import com.codeandpray.library.repo.BookRepo;
 import com.codeandpray.library.repo.RatingRepo;
@@ -78,10 +81,10 @@ public class RatingService {
     @Transactional(readOnly = false)
     public RatingResponse save(RatingRequest request) {
         Book book = bookRepo.findById(request.getBookId())
-                .orElseThrow(() -> new RuntimeException("Book not found with id: " + request.getBookId()));
+                .orElseThrow(() -> new BookNotFoundException("Книга с ID: " + request.getBookId() + " не найдена"));
 
         User user = userRepo.findById(request.getUserId())
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + request.getUserId()));
+                .orElseThrow(() -> new UserNotFoundException("Пользователь с ID: " + request.getUserId() + " не найден"));
 
         Optional<Rating> existingRating = ratingRepo.findByBookAndUser(book, user);
 
@@ -108,13 +111,13 @@ public class RatingService {
                 .map(oldRating -> {
                     if (!oldRating.getBook().getId().equals(updatedRequest.getBookId())) {
                         Book newBook = bookRepo.findById(updatedRequest.getBookId())
-                                .orElseThrow(() -> new RuntimeException("Book not found"));
+                                .orElseThrow(() -> new BookNotFoundException("Книга с ID: " + updatedRequest.getBookId() + " не найдена"));
                         oldRating.setBook(newBook);
                     }
 
                     if (!oldRating.getUser().getId().equals(updatedRequest.getUserId())) {
                         User newUser = userRepo.findById(updatedRequest.getUserId())
-                                .orElseThrow(() -> new RuntimeException("User not found"));
+                                .orElseThrow(() -> new UserNotFoundException("Пользователь с ID: " + updatedRequest.getUserId() + " не найден"));
                         oldRating.setUser(newUser);
                     }
 
@@ -130,6 +133,6 @@ public class RatingService {
                     ratingRepo.delete(rating);
                     return true;
                 })
-                .orElse(false);
+                .orElseThrow(() -> new RatingNotFoundException("Рейтинг к ID: "+ id + " не существует"));
     }
 }

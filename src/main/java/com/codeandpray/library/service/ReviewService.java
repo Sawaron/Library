@@ -2,6 +2,9 @@ package com.codeandpray.library.service;
 
 import com.codeandpray.library.dto.*;
 import com.codeandpray.library.entity.*;
+import com.codeandpray.library.exception.entity.FineNotFoundException;
+import com.codeandpray.library.exception.entity.ReviewNotFoundException;
+import com.codeandpray.library.exception.logic.ReviewAlreadyExists;
 import com.codeandpray.library.mapper.ReviewMapper;
 import com.codeandpray.library.repo.ReviewRepo;
 import lombok.RequiredArgsConstructor;
@@ -28,10 +31,7 @@ public class ReviewService {
     @Transactional
     public ReviewResponse create(ReviewRequest dto) {
         if (reviewRepo.existsByBookIdAndUserId(dto.getBookId(), dto.getUserId())) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "You have already left a review for this book"
-            );
+            throw new ReviewAlreadyExists("Вы уже оставляли обзор на эту книгу");
         }
 
         Book book = bookService.getById(dto.getBookId());
@@ -49,7 +49,7 @@ public class ReviewService {
     @Transactional
     public ReviewResponse update(Long id, ReviewRequest dto) {
         Review review = reviewRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Review not found"));
+                .orElseThrow(() -> new ReviewNotFoundException("Обзор с ID: " + id + " не найден"));
 
         if (dto.getRating() != null) review.setRating(dto.getRating());
         if (dto.getComment() != null) review.setComment(dto.getComment());
@@ -61,11 +61,14 @@ public class ReviewService {
     public ReviewResponse getById(Long id) {
         return reviewRepo.findById(id)
                 .map(reviewMapper::toResponse)
-                .orElseThrow(() -> new RuntimeException("Review not found"));
+                .orElseThrow(() -> new ReviewNotFoundException("Обзор с ID: " + id + " не найден"));
     }
 
     @Transactional
-    public void delete(Long id) {
+    public void deleteById(Long id) {
+        if (!reviewRepo.existsById(id)) {
+            throw new ReviewNotFoundException("Обзор с ID: " + id + " не найден");
+        }
         reviewRepo.deleteById(id);
     }
 }
