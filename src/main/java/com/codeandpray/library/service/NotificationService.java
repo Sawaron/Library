@@ -2,6 +2,7 @@ package com.codeandpray.library.service;
 
 import com.codeandpray.library.entity.Notification;
 import com.codeandpray.library.entity.User;
+import com.codeandpray.library.exception.entity.NotificationNotFoundException;
 import com.codeandpray.library.repo.NotificationRepo;
 import com.codeandpray.library.repo.UserRepo;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +33,7 @@ public class NotificationService {
     @Transactional(readOnly = true)
     public Notification getById(Long id) {
         return notificationRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Уведомление с ID " + id + " не найдено"));
+                .orElseThrow(() -> new NotificationNotFoundException("Уведомление с ID " + id + " не найдено"));
     }
 
     @Transactional(readOnly = true)
@@ -56,7 +57,7 @@ public class NotificationService {
 
     public void delete(Long id) {
         if (!notificationRepo.existsById(id)) {
-            throw new RuntimeException("Нечего удалять: уведомление не найдено");
+            throw new NotificationNotFoundException("Нечего удалять: уведомление не найдено");
         }
         notificationRepo.deleteById(id);
     }
