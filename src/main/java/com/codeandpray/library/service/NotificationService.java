@@ -9,6 +9,7 @@ import java.util.List;
 
 @Transactional
 @Service
+
 public class NotificationService {
 
     private final NotificationRepo repo;
