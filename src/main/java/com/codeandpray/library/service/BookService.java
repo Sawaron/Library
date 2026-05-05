@@ -3,8 +3,10 @@ package com.codeandpray.library.service;
 import com.codeandpray.library.catalog.Genre;
 import com.codeandpray.library.dto.*;
 import com.codeandpray.library.entity.*;
+import com.codeandpray.library.enums.AgeCategory;
 import com.codeandpray.library.enums.BookStatus;
 import com.codeandpray.library.exception.entity.BookNotFoundException;
+import com.codeandpray.library.exception.logic.InvalidAgeCategory;
 import com.codeandpray.library.mapper.BookMapper;
 import com.codeandpray.library.repo.*;
 import org.springframework.data.domain.*;
@@ -51,6 +53,7 @@ public class BookService {
         Set<Genre> genres = new HashSet<>(genreRepo.findAllById(dto.getGenreIds()));
 
         Book book = bookMapper.toEntity(dto, authors, genres);
+        book.setAgeCategory(parseAgeCategory(dto.getAgeCategory()));
         return bookRepository.save(book);
     }
 
@@ -67,7 +70,24 @@ public class BookService {
                 : book.getGenres();
 
         bookMapper.updateEntity(book, dto, authors, genres);
+
+        if (dto.getAgeCategory() != null) {
+            book.setAgeCategory(parseAgeCategory(dto.getAgeCategory()));
+        }
+
         return bookRepository.save(book);
+    }
+
+    private AgeCategory parseAgeCategory(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+
+        try {
+            return AgeCategory.valueOf(value);
+        } catch (IllegalArgumentException ex) {
+            throw new InvalidAgeCategory("Invalid age category: " + value);
+        }
     }
 
     @Transactional

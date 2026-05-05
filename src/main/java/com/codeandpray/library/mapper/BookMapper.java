@@ -23,7 +23,6 @@ public class BookMapper {
                 .description(dto.getDescription())
                 .language(dto.getLanguage())
                 .pageCount(dto.getPageCount())
-                .ageCategory(dto.getAgeCategory())
                 .count(dto.getCount())
                 .hasAudiobook(dto.isHasAudiobook())
                 .build();

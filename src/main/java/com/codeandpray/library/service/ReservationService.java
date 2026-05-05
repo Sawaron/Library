@@ -33,18 +33,22 @@
         private final BookRepo bookRepository;
         private final UserRepo userRepository;
         private final ReservationMapper reservationMapper;
+        private final AgeRestrictionService ageRestrictionService;
 
         @Transactional
         public ReservationResponse create(ReservationRequest request) {
             Book book = bookRepository.findById(request.getBookId())
                     .orElseThrow(() -> new BookNotFoundException("Книга с ID: " + request.getBookId() + " не найдена"));
 
+            User user = userRepository.findById(request.getReaderId())
+                    .orElseThrow(() -> new UserNotFoundException("Пользователь c ID: " + request.getReaderId() + " не найден"));
+
+            ageRestrictionService.checkUserCanAccessBook(user, book);
+
             if (book.getCount() <= 0) {
                 throw new LogicBadRequestException("Все экземпляры книги заняты, резервирование невозможно", "BOOK_NOT_AVAILABLE");
             }
 
-            User user = userRepository.findById(request.getReaderId())
-                    .orElseThrow(() -> new UserNotFoundException("Пользователь c ID: " + request.getReaderId() + " не найден"));
 
 
             int updatedRows = bookRepository.decrementCountIfAvailable(book.getId());
