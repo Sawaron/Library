@@ -13,6 +13,7 @@ public class UpdateBookRequest {
     private String language;
     private Integer count;
     private Integer pageCount;
+    private String ageCategory;
     private String description;
     private String status;
 

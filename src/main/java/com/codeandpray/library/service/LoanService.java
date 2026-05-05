@@ -34,18 +34,22 @@ public class LoanService {
     private final UserRepo userRepository;
     private final LoanMapper loanMapper;
     private final FineService fineService;
+    private final AgeRestrictionService ageRestrictionService;
 
     @Transactional
     public LoanResponse createLoan(LoanRequest request) {
         Book book = bookRepository.findById(request.getBookId())
                 .orElseThrow(() -> new BookNotFoundException("Книга с ID: " + request.getBookId() + " не найдено"));
 
+        User user = userRepository.findById(request.getReaderId())
+                .orElseThrow(() -> new UserNotFoundException("Пользователь с ID: " + request.getReaderId() + " не найден"));
+
+        ageRestrictionService.checkUserCanAccessBook(user, book);
+
         if (book.getCount() <= 0) {
             throw new LogicBadRequestException("В данный момент нет свободных экземпляров книги для выдачи", "BOOK_NOT_AVAILABLE");
         }
 
-        User user = userRepository.findById(request.getReaderId())
-                .orElseThrow(() -> new UserNotFoundException("Пользователь с ID: " + request.getReaderId() + " не найден"));
 
         LocalDate autoReturnDate = LocalDate.now().plusDays(14);
 
