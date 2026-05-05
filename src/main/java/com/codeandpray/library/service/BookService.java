@@ -86,7 +86,7 @@ public class BookService {
         try {
             return AgeCategory.valueOf(value);
         } catch (IllegalArgumentException ex) {
-            throw new InvalidAgeCategory("Invalid age category: " + value);
+            throw new InvalidAgeCategory("Неверная возрастная категория: " + value);
         }
     }
 
