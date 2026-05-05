@@ -1,60 +1,63 @@
 package com.codeandpray.library.service;
 
 import com.codeandpray.library.entity.Notification;
+import com.codeandpray.library.entity.User;
 import com.codeandpray.library.repo.NotificationRepo;
+import com.codeandpray.library.repo.UserRepo;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-@Transactional
 @Service
-
+@RequiredArgsConstructor
+@Transactional
 public class NotificationService {
 
-    private final NotificationRepo repo;
+    private final NotificationRepo notificationRepo;
+    private final UserRepo userRepo;
 
-    public NotificationService(NotificationRepo repo){
-        this.repo = repo;
-    }
 
     public Notification create(Notification notification) {
-        return repo.save(notification);
+        return notificationRepo.save(notification);
     }
 
-    public List<Notification> getByUser(Long userId) {
-        return repo.findByUserId(userId);
-    }
-
-    public void markAsRead(Long id) {
-        Notification n = repo.findById(id).orElseThrow();
-        n.setRead(true);
-        repo.save(n);
-    }
-
+    @Transactional(readOnly = true)
     public List<Notification> getAll() {
-        return repo.findAll();
+        return notificationRepo.findAll();
     }
 
+    @Transactional(readOnly = true)
     public Notification getById(Long id) {
-        return repo.findById(id).orElseThrow(() -> new RuntimeException("Notification not found with id: " + id));
-
-
-
+        return notificationRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Уведомление с ID " + id + " не найдено"));
     }
 
-    public Notification update(Long id, Notification newData) {
-        Notification existing = repo.findById(id).orElseThrow();
+    @Transactional(readOnly = true)
+    public List<Notification> getByUserFirstname(String firstname) {
+        User user = userRepo.findByFirstname(firstname)
+                .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден: " + firstname));
+        return notificationRepo.findByUserId(user.getId());
+    }
 
-        existing.setMessage(newData.getMessage());
-        existing.setUserId(newData.getUserId());
-        existing.setRead(newData.isRead());
-        existing.setType(newData.getType());
+    public void markAsRead(Long id, String currentUserFirstname) {
+        Notification notification = getById(id);
+        User user = userRepo.findByFirstname(currentUserFirstname).orElseThrow();
 
-        return repo.save(existing);
+        if (!notification.getUserId().equals(user.getId())) {
+            throw new RuntimeException("Вы не можете изменять чужие уведомления!");
+        }
+
+        notification.setRead(true);
+        notificationRepo.save(notification);
     }
 
     public void delete(Long id) {
-        repo.deleteById(id);
+        if (!notificationRepo.existsById(id)) {
+            throw new RuntimeException("Нечего удалять: уведомление не найдено");
+        }
+        notificationRepo.deleteById(id);
     }
 }

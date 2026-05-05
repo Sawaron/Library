@@ -10,7 +10,6 @@ import java.time.LocalDateTime;
 @Builder
 
 public class NotificationResponse {
-    private Long uniqueId;
     private Long userId;
     private String message;
     private boolean isRead;
