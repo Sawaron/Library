@@ -1,6 +1,1089 @@
 openapi: 3.0.0
 info:
   title: Library Management API
+  description: API для управления библиотекой (книги, читатели, выдача и бронирование)
+  version: 1.0.0
+  contact:
+    name: Library Support
+    email: support@library.com
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:8000/api
+    description: Development server
+  - url: https://api.library.com/api
+    description: Production server
+
+tags:
+  - name: Books
+    description: Управление книгами и каталогом
+  - name: Readers
+    description: Управление читателями
+  - name: Loans
+    description: Управление выдачей книг
+  - name: Reservations
+    description: Управление бронированием книг
+
+paths:
+  /books:
+    get:
+      tags:
+        - Books
+      summary: Получить список книг
+      description: Возвращает список всех книг с возможностью фильтрации по названию, автору, жанру и статусу
+      operationId: getBooks
+      parameters:
+        - name: title
+          in: query
+          description: Фильтр по названию книги
+          schema:
+            type: string
+        - name: author
+          in: query
+          description: Фильтр по автору
+          schema:
+            type: string
+        - name: genre
+          in: query
+          description: Фильтр по жанру
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: Фильтр по статусу
+          schema:
+            type: string
+            enum:
+              - available
+              - issued
+              - reserved
+        - name: isbn
+          in: query
+          description: Фильтр по ISBN
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Номер страницы (по умолчанию 1)
+          schema:
+            type: integer
+            default: 1
+        - name: pageSize
+          in: query
+          description: Количество элементов на странице (по умолчанию 20)
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Успешный ответ со списком книг
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Book'
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  pageSize:
+                    type: integer
+              example:
+                data:
+                  - id: 1
+                    title: Война и мир
+                    author: Лев Толстой
+                    genre: Классическая литература
+                    isbn: "978-5-17-070490-8"
+                    status: available
+                    summary: Эпический роман о войне 1812 года
+                  - id: 2
+                    title: Преступление и наказание
+                    author: Федор Достоевский
+                    genre: Психологический роман
+                    isbn: "978-5-17-070491-5"
+                    status: issued
+                    summary: История преступления и его последствий
+                total: 150
+                page: 1
+                pageSize: 20
+        '400':
+          description: Некорректные параметры запроса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      tags:
+        - Books
+      summary: Добавить новую книгу
+      description: Создает новую запись книги в каталоге (только для библиотекарей)
+      operationId: createBook
+      requestBody:
+        description: Данные новой книги
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBookRequest'
+            example:
+              title: Война и мир
+              author: Лев Толстой
+              genre: Классическая литература
+              isbn: "978-5-17-070490-8"
+              summary: Эпический роман о войне 1812 года
+      responses:
+        '201':
+          description: Книга успешно создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+              example:
+                id: 1
+                title: Война и мир
+                author: Лев Толстой
+                genre: Классическая литература
+                isbn: "978-5-17-070490-8"
+                status: available
+                summary: Эпический роман о войне 1812 года
+                createdAt: "2026-04-10T10:30:00Z"
+        '400':
+          description: Некорректные данные в теле запроса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Требуется аутентификация
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Недостаточно прав (требуется роль библиотекаря)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /books/{id}:
+    get:
+      tags:
+        - Books
+      summary: Получить информацию о книге
+      description: Возвращает детальную информацию о конкретной книге
+      operationId: getBookById
+      parameters:
+        - name: id
+          in: path
+          description: Уникальный идентификатор книги
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Информация о книге успешно получена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookDetail'
+              example:
+                id: 1
+                title: Война и мир
+                author: Лев Толстой
+                genre: Классическая литература
+                isbn: "978-5-17-070490-8"
+                status: available
+                summary: Эпический роман о войне 1812 года
+                createdAt: "2026-04-10T10:30:00Z"
+                updatedAt: "2026-04-10T10:30:00Z"
+                loans:
+                  - id: 1
+                    readerId: 5
+                    loanDate: "2026-03-01T12:00:00Z"
+                    returnDate: null
+                reservations:
+                  - id: 1
+                    readerId: 7
+                    reservationDate: "2026-04-05T08:15:00Z"
+                    availableDate: "2026-04-15T00:00:00Z"
+        '404':
+          description: Книга не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      tags:
+        - Books
+      summary: Обновить информацию о книге
+      description: Редактирует существующую запись о книге (только для библиотекарей)
+      operationId: updateBook
+      parameters:
+        - name: id
+          in: path
+          description: Уникальный идентификатор книги
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        description: Обновленные данные книги
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBookRequest'
+            example:
+              title: Война и мир (переиздание)
+              genre: Классическая литература
+      responses:
+        '200':
+          description: Книга успешно обновлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+        '400':
+          description: Некорректные данные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Требуется аутентификация
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Книга не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      tags:
+        - Books
+      summary: Удалить книгу
+      description: Удаляет книгу из каталога (только для библиотекарей)
+      operationId: deleteBook
+      parameters:
+        - name: id
+          in: path
+          description: Уникальный идентификатор книги
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Книга успешно удалена
+        '401':
+          description: Требуется аутентификация
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Книга не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /readers:
+    get:
+      tags:
+        - Readers
+      summary: Получить список читателей
+      description: Возвращает список всех зарегистрированных читателей (только для библиотекарей)
+      operationId: getReaders
+      parameters:
+        - name: firstName
+          in: query
+          description: Фильтр по имени
+          schema:
+            type: string
+        - name: lastName
+          in: query
+          description: Фильтр по фамилии
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: Фильтр по статусу
+          schema:
+            type: string
+            enum:
+              - active
+              - inactive
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Список читателей успешно получен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Reader'
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  pageSize:
+                    type: integer
+              example:
+                data:
+                  - id: 1
+                    firstName: Иван
+                    lastName: Петров
+                    email: ivan@example.com
+                    phone: "+79991234567"
+                    address: ул. Центральная, д. 10, кв. 5
+                    status: active
+                    registrationDate: "2025-01-15T10:00:00Z"
+                  - id: 2
+                    firstName: Мария
+                    lastName: Сидорова
+                    email: maria@example.com
+                    phone: "+79997654321"
+                    address: ул. Советская, д. 25
+                    status: active
+                    registrationDate: "2025-02-20T14:30:00Z"
+                total: 50
+                page: 1
+                pageSize: 20
+        '401':
+          description: Требуется аутентификация
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      tags:
+        - Readers
+      summary: Зарегистрировать нового читателя
+      description: Создает новую учетную запись читателя в библиотеке
+      operationId: createReader
+      requestBody:
+        description: Данные нового читателя
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateReaderRequest'
+            example:
+              firstName: Иван
+              lastName: Петров
+              email: ivan@example.com
+              phone: "+79991234567"
+              address: ул. Центральная, д. 10, кв. 5
+      responses:
+        '201':
+          description: Читатель успешно зарегистрирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reader'
+              example:
+                id: 1
+                firstName: Иван
+                lastName: Петров
+                email: ivan@example.com
+                phone: "+79991234567"
+                address: ул. Центральная, д. 10, кв. 5
+                status: active
+                registrationDate: "2026-04-10T10:30:00Z"
+        '400':
+          description: Некорректные данные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Читатель с таким email уже существует
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /readers/{id}:
+    get:
+      tags:
+        - Readers
+      summary: Получить информацию о читателе
+      description: Возвращает детальную информацию о конкретном читателе
+      operationId: getReaderById
+      parameters:
+        - name: id
+          in: path
+          description: Уникальный идентификатор читателя
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Информация о читателе успешно получена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReaderDetail'
+              example:
+                id: 1
+                firstName: Иван
+                lastName: Петров
+                email: ivan@example.com
+                phone: "+79991234567"
+                address: ул. Центральная, д. 10, кв. 5
+                status: active
+                registrationDate: "2025-01-15T10:00:00Z"
+                activeLoans:
+                  - id: 1
+                    bookId: 1
+                    bookTitle: Война и мир
+                    loanDate: "2026-03-01T12:00:00Z"
+                    returnDate: "2026-04-15T00:00:00Z"
+                activeReservations:
+                  - id: 1
+                    bookId: 5
+                    bookTitle: Преступление и наказание
+                    reservationDate: "2026-04-05T08:15:00Z"
+                    availableDate: "2026-04-20T00:00:00Z"
+        '404':
+          description: Читатель не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      tags:
+        - Readers
+      summary: Обновить информацию о читателе
+      description: Редактирует данные читателя (только для библиотекарей или самого читателя)
+      operationId: updateReader
+      parameters:
+        - name: id
+          in: path
+          description: Уникальный идентификатор читателя
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        description: Обновленные данные читателя
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateReaderRequest'
+            example:
+              phone: "+79999999999"
+              address: ул. Новая, д. 5
+      responses:
+        '200':
+          description: Информация о читателе успешно обновлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reader'
+        '400':
+          description: Некорректные данные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Требуется аутентификация
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Читатель не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      tags:
+        - Readers
+      summary: Удалить учетную запись читателя
+      description: Удаляет учетную запись читателя (только для библиотекарей)
+      operationId: deleteReader
+      parameters:
+        - name: id
+          in: path
+          description: Уникальный идентификатор читателя
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Учетная запись успешно удалена
+        '401':
+          description: Требуется аутентификация
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Читатель не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /loans:
+    get:
+      tags:
+        - Loans
+      summary: Получить список выданных книг
+      description: Возвращает список всех выданных книг (только для библиотекарей)
+      operationId: getLoans
+      parameters:
+        - name: readerId
+          in: query
+          description: Фильтр по ID читателя
+          schema:
+            type: integer
+        - name: bookId
+          in: query
+          description: Фильтр по ID книги
+          schema:
+            type: integer
+        - name: status
+          in: query
+          description: Фильтр по статусу
+          schema:
+            type: string
+            enum:
+              - active
+              - returned
+              - overdue
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Список выданных книг успешно получен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Loan'
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  pageSize:
+                    type: integer
+              example:
+                data:
+                  - id: 1
+                    bookId: 1
+                    bookTitle: Война и мир
+                    readerId: 1
+                    readerName: Иван Петров
+                    loanDate: "2026-03-01T12:00:00Z"
+                    returnDate: "2026-04-15T00:00:00Z"
+                    actualReturnDate: null
+                    status: active
+                  - id: 2
+                    bookId: 3
+                    bookTitle: Преступление и наказание
+                    readerId: 2
+                    readerName: Мария Сидорова
+                    loanDate: "2026-02-15T14:30:00Z"
+                    returnDate: "2026-03-20T00:00:00Z"
+                    actualReturnDate: "2026-03-18T10:15:00Z"
+                    status: returned
+                total: 25
+                page: 1
+                pageSize: 20
+        '401':
+          description: Требуется аутентификация
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      tags:
+        - Loans
+      summary: Выдать книгу читателю
+      description: Регистрирует выдачу книги читателю (только для библиотекарей)
+      operationId: createLoan
+      requestBody:
+        description: Данные для выдачи книги
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLoanRequest'
+            example:
+              bookId: 1
+              readerId: 1
+              returnDate: "2026-04-15T00:00:00Z"
+      responses:
+        '201':
+          description: Книга успешно выдана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Loan'
+              example:
+                id: 1
+                bookId: 1
+                bookTitle: Война и мир
+                readerId: 1
+                readerName: Иван Петров
+                loanDate: "2026-04-10T10:30:00Z"
+                returnDate: "2026-04-15T00:00:00Z"
+                actualReturnDate: null
+                status: active
+        '400':
+          description: Некорректные данные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Требуется аутентификация
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Книга или читатель не найдены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Книга недоступна для выдачи (уже выдана или зарезервирована)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /loans/{id}:
+    get:
+      tags:
+        - Loans
+      summary: Получить информацию о выдаче
+      description: Возвращает детальную информацию о конкретной выдаче
+      operationId: getLoanById
+      parameters:
+        - name: id
+          in: path
+          description: Уникальный идентификатор выдачи
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Информация о выдаче успешно получена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoanDetail'
+        '404':
+          description: Выдача не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /loans/{id}/return:
+    post:
+      tags:
+        - Loans
+      summary: Вернуть книгу
+      description: Регистрирует возврат книги (только для библиотекарей)
+      operationId: returnLoan
+      parameters:
+        - name: id
+          in: path
+          description: Уникальный идентификатор выдачи
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        description: Дополнительная информация о возврате
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                condition:
+                  type: string
+                  description: Состояние книги при возврате
+                  enum:
+                    - good
+                    - damaged
+                notes:
+                  type: string
+                  description: Примечания при возврате
+            example:
+              condition: good
+              notes: Книга в отличном состоянии
+      responses:
+        '200':
+          description: Возврат книги успешно зарегистрирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Loan'
+              example:
+                id: 1
+                bookId: 1
+                bookTitle: Война и мир
+                readerId: 1
+                readerName: Иван Петров
+                loanDate: "2026-03-01T12:00:00Z"
+                returnDate: "2026-04-15T00:00:00Z"
+                actualReturnDate: "2026-04-10T15:45:00Z"
+                status: returned
+        '401':
+          description: Требуется аутентификация
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Выдача не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Книга уже возвращена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /readers/{readerId}/loans:
+    get:
+      tags:
+        - Loans
+      summary: Получить активные выданные книги читателя
+      description: Возвращает список активных выданных книг для конкретного читателя
+      operationId: getReaderLoans
+      parameters:
+        - name: readerId
+          in: path
+          description: Уникальный идентификатор читателя
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Список активных выданных книг успешно получен
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Loan'
+        '404':
+          description: Читатель не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /reservations:
+    get:
+      tags:
+        - Reservations
+      summary: Получить список бронирований
+      description: Возвращает список всех бронирований (только для библиотекарей)
+      operationId: getReservations
+      parameters:
+        - name: readerId
+          in: query
+          description: Фильтр по ID читателя
+          schema:
+            type: integer
+        - name: bookId
+          in: query
+          description: Фильтр по ID книги
+          schema:
+            type: integer
+        - name: status
+          in: query
+          description: Фильтр по статусу
+          schema:
+            type: string
+            enum:
+              - active
+              - fulfilled
+              - cancelled
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Список бронирований успешно получен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Reservation'
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  pageSize:
+                    type: integer
+              example:
+                data:
+                  - id: 1
+                    bookId: 1
+                    bookTitle: Война и мир
+                    readerId: 3
+                    readerName: Петр Иванов
+                    reservationDate: "2026-04-05T08:15:00Z"
+                    availableDate: "2026-04-15T00:00:00Z"
+                    status: active
+                  - id: 2
+                    bookId: 5
+                    bookTitle: Преступление и наказание
+                    readerId: 4
+                    readerName: Анна Кузнецова
+                    reservationDate: "2026-04-01T09:30:00Z"
+                    availableDate: "2026-04-20T00:00:00Z"
+                    status: active
+                total: 15
+                page: 1
+                pageSize: 20
+        '401':
+          description: Требуется аутентификация
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      tags:
+        - Reservations
+      summary: Забронировать книгу
+      description: Создает новое бронирование книги для читателя
+      operationId: createReservation
+      requestBody:
+        description: Данные бронирования
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateReservationRequest'
+            example:
+              bookId: 1
+              readerId: 3
+              availableDate: "2026-04-15T00:00:00Z"
+      responses:
+        '201':
+          description: Бронирование успешно создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reservation'
+              example:
+                id: 1
+                bookId: 1
+                bookTitle: Война и мир
+                readerId: 3
+                readerName: Петр Иванов
+                reservationDate: "2026-04-10T10:30:00Z"
+                availableDate: "2026-04-15T00:00:00Z"
+                status: active
+        '400':
+          description: Некорректные данные
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Книга или читатель не найдены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Книга доступна или читатель уже забронировал эту книгу
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /reservations/{id}:
+    get:
+      tags:
+        - Reservations
+      summary: Получить информацию о бронировании
+      description: Возвращает детальную информацию о конкретном бронировании
+      operationId: getReservationById
+      parameters:
+        - name: id
+          in: path
+          description: Уникальный идентификатор бронирования
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Информация о бронировании успешно получена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReservationDetail'
+        '404':
+          description: Бронирование не найдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      tags:
+        - Reservations
+      summary: Отменить бронирование
+      description: Отменяет активное бронирование (читатель может отменить свое, библиотекарь - любое)
+      operationId: cancelReservation
+      parameters:
+        - name: id
+          in: path
+          description: Уникальный идентификатор бронирования
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Бронирование успешно отменено
+        '401':
+          description: Требуется аутентификация
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Бронирование не найдено
+          content:
+            application/json:
+              schema:
+openapi: 3.0.0
+info:
+  title: Library Management API
   description: >
     REST API для управления библиотекой.
 
