@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>LMS — Library Management System</title>
+<style>
+:root{
+  --bg:#0d1117;--sidebar:#010409;--card:#161b22;--border:#30363d;
+  --accent:#58a6ff;--green:#3fb950;--red:#f85149;--yellow:#e3b341;
+  --purple:#a371f7;--orange:#f0883e;--text:#e6edf3;--muted:#8b949e;
+  --input:#0d1117;--hover:rgba(255,255,255,.04);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:14px}
+
+/* AUTH */
+.auth-wrap{display:flex;align-items:center;justify-content:center;height:100vh;background:var(--bg)}
+.auth-box{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:40px;width:380px}
+.auth-logo{text-align:center;margin-bottom:28px}
+.auth-logo h1{font-size:1.4rem;font-weight:700}
+.auth-logo p{color:var(--muted);font-size:.85rem;margin-top:4px}
+.auth-tabs{display:flex;gap:0;margin-bottom:24px;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.auth-tab{flex:1;padding:8px;text-align:center;cursor:pointer;color:var(--muted);font-size:.85rem;font-weight:600;transition:.2s}
+.auth-tab.active{background:var(--accent);color:#0d1117}
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:.8rem;color:var(--muted);margin-bottom:6px;font-weight:500}
+.form-group input,.form-group select{width:100%;background:var(--input);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:.9rem;outline:none;transition:.2s}
+.form-group input:focus,.form-group select:focus{border-color:var(--accent)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 18px;border-radius:8px;font-size:.875rem;font-weight:600;cursor:pointer;border:none;transition:.2s;text-decoration:none}
+.btn-primary{background:var(--accent);color:#0d1117;width:100%}
+.btn-primary:hover{background:#79c0ff}
+.btn-sm{padding:5px 12px;font-size:.8rem}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+.btn-danger{background:var(--red);color:#fff}
+.btn-danger:hover{background:#da3633}
+.btn-success{background:var(--green);color:#0d1117}
+.btn-success:hover{background:#56d364}
+.btn-warn{background:var(--yellow);color:#0d1117}
+.error-msg{color:var(--red);font-size:.8rem;margin-top:12px;text-align:center}
+
+/* LAYOUT */
+.app{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:220px;min-width:220px;background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:16px 0}
+.sidebar-logo{display:flex;align-items:center;gap:10px;padding:8px 16px 20px;border-bottom:1px solid var(--border);margin-bottom:12px}
+.sidebar-dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(1.3)}}
+.sidebar-title{font-weight:700;font-size:.95rem}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;border-radius:6px;margin:1px 8px;color:var(--muted);font-size:.875rem;transition:.15s}
+.nav-item:hover{background:var(--hover);color:var(--text)}
+.nav-item.active{background:rgba(88,166,255,.12);color:var(--accent)}
+.nav-icon{font-size:1rem;width:18px;text-align:center}
+.sidebar-bottom{margin-top:auto;padding:12px 8px 0;border-top:1px solid var(--border)}
+.user-chip{display:flex;align-items:center;gap:10px;padding:10px;border-radius:8px;background:var(--card)}
+.user-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--purple));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;color:#fff;flex-shrink:0}
+.user-info{overflow:hidden}
+.user-name{font-weight:600;font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-role{font-size:.7rem;color:var(--muted)}
+.logout-btn{background:none;border:none;color:var(--muted);cursor:pointer;padding:4px;border-radius:4px;font-size:.8rem;margin-left:auto}
+.logout-btn:hover{color:var(--red)}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid var(--border);background:var(--bg);position:sticky;top:0;z-index:10}
+.topbar-title{font-size:1.1rem;font-weight:700}
+.topbar-right{display:flex;gap:8px;align-items:center}
+.page{padding:24px;flex:1}
+.page{display:none}
+.page.active{display:block}
+
+/* CARDS & TABLE */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px}
+.stat-val{font-size:1.8rem;font-weight:800;margin-bottom:4px}
+.stat-label{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.blue{color:var(--accent)}.green{color:var(--green)}.red{color:var(--red)}.yellow{color:var(--yellow)}.purple{color:var(--purple)}
+
+.table-wrap{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.table-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border)}
+.table-header h3{font-size:.95rem;font-weight:700}
+.search-row{display:flex;gap:8px;flex-wrap:wrap;padding:12px 18px;border-bottom:1px solid var(--border);background:rgba(255,255,255,.01)}
+.search-row input,.search-row select{background:var(--input);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-size:.8rem;outline:none}
+.search-row input:focus,.search-row select:focus{border-color:var(--accent)}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;padding:10px 16px;font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);font-weight:600;background:rgba(255,255,255,.01)}
+td{padding:11px 16px;border-bottom:1px solid rgba(48,54,61,.6);font-size:.85rem;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--hover)}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.7rem;font-weight:700}
+.badge-green{background:rgba(63,185,80,.15);color:var(--green)}
+.badge-blue{background:rgba(88,166,255,.15);color:var(--accent)}
+.badge-red{background:rgba(248,81,73,.15);color:var(--red)}
+.badge-yellow{background:rgba(227,179,65,.15);color:var(--yellow)}
+.badge-purple{background:rgba(163,113,247,.15);color:var(--purple)}
+.badge-gray{background:rgba(139,148,158,.15);color:var(--muted)}
+.actions{display:flex;gap:6px}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:1000;display:none}
+.modal-overlay.open{display:flex}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:28px;width:460px;max-width:95vw;max-height:90vh;overflow-y:auto}
+.modal h2{font-size:1.1rem;font-weight:700;margin-bottom:20px}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
+
+/* EMPTY / LOADING */
+.empty{text-align:center;padding:48px;color:var(--muted)}
+.empty-icon{font-size:2.5rem;margin-bottom:12px}
+.loading{text-align:center;padding:32px;color:var(--muted)}
+.spinner{display:inline-block;width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* PAGINATION */
+.pagination{display:flex;gap:6px;align-items:center;justify-content:center;padding:14px}
+.page-btn{background:var(--card);border:1px solid var(--border);color:var(--text);padding:5px 11px;border-radius:6px;cursor:pointer;font-size:.8rem}
+.page-btn:hover{border-color:var(--accent);color:var(--accent)}
+.page-btn.active{background:var(--accent);color:#0d1117;border-color:var(--accent)}
+.page-btn:disabled{opacity:.4;cursor:default}
+.page-info{color:var(--muted);font-size:.8rem}
+
+/* TOAST */
+.toast-container{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:8px;z-index:9999}
+.toast{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 18px;font-size:.85rem;display:flex;align-items:center;gap:10px;animation:slideIn .3s ease;max-width:320px}
+.toast.success{border-left:3px solid var(--green)}
+.toast.error{border-left:3px solid var(--red)}
+.toast.info{border-left:3px solid var(--accent)}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div class="auth-wrap" id="authWrap">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <h1>📚 LMS</h1>
+      <p>Library Management System</p>
+    </div>
+    <div class="auth-tabs">
+      <div class="auth-tab active" onclick="switchTab('login')">Вход</div>
+      <div class="auth-tab" onclick="switchTab('register')">Регистрация</div>
+    </div>
+
+    <div id="loginForm">
+      <div class="form-group"><label>Email / Username</label><input id="loginEmail" placeholder="user@library.ru" type="text"/></div>
+      <div class="form-group"><label>Пароль</label><input id="loginPass" placeholder="••••••••" type="password" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+      <button class="btn btn-primary" onclick="doLogin()">Войти</button>
+      <div class="error-msg" id="loginErr"></div>
+    </div>
+
+    <div id="registerForm" style="display:none">
+      <div class="form-group"><label>Имя</label><input id="regFirst" placeholder="Иван"/></div>
+      <div class="form-group"><label>Фамилия</label><input id="regLast" placeholder="Петров"/></div>
+      <div class="form-group"><label>Email</label><input id="regEmail" placeholder="user@library.ru" type="email"/></div>
+      <div class="form-group"><label>Телефон</label><input id="regPhone" placeholder="+79001234567"/></div>
+      <div class="form-group"><label>Дата рождения</label><input id="regBirth" type="date"/></div>
+      <div class="form-group"><label>Пароль</label><input id="regPass" placeholder="••••••••" type="password"/></div>
+      <button class="btn btn-primary" onclick="doRegister()">Зарегистрироваться</button>
+      <div class="error-msg" id="regErr"></div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="appWrap" style="display:none">
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-dot"></div>
+      <span class="sidebar-title">LMS</span>
+    </div>
+    <div class="nav-item active" onclick="navigate('dashboard')"><span class="nav-icon">🏠</span>Главная</div>
+    <div class="nav-item" onclick="navigate('books')"><span class="nav-icon">📚</span>Книги</div>
+    <div class="nav-item" onclick="navigate('loans')"><span class="nav-icon">📖</span>Выдачи</div>
+    <div class="nav-item" onclick="navigate('reservations')"><span class="nav-icon">🔖</span>Брони</div>
+    <div class="nav-item" onclick="navigate('fines')"><span class="nav-icon">💸</span>Штрафы</div>
+    <div class="nav-item" onclick="navigate('users')"><span class="nav-icon">👤</span>Пользователи</div>
+    <div class="sidebar-bottom">
+      <div class="user-chip">
+        <div class="user-avatar" id="userAvatar">?</div>
+        <div class="user-info">
+          <div class="user-name" id="userName">—</div>
+          <div class="user-role" id="userRole">—</div>
+        </div>
+        <button class="logout-btn" onclick="logout()" title="Выйти">✕</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="pageTitle">Главная</div>
+      <div class="topbar-right" id="topbarActions"></div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-val blue" id="statBooks">—</div><div class="stat-label">Книг в каталоге</div></div>
+        <div class="stat-card"><div class="stat-val green" id="statLoans">—</div><div class="stat-label">Активных выдач</div></div>
+        <div class="stat-card"><div class="stat-val yellow" id="statRes">—</div><div class="stat-label">Активных броней</div></div>
+        <div class="stat-card"><div class="stat-val red" id="statFines">—</div><div class="stat-label">Штрафов не оплачено</div></div>
+      </div>
+      <div class="table-wrap">
+        <div class="table-header"><h3>📖 Последние выдачи</h3></div>
+        <div id="dashLoans"><div class="loading"><div class="spinner"></div><br>Загрузка...</div></div>
+      </div>
+    </div>
+
+    <!-- BOOKS -->
+    <div class="page" id="page-books">
+      <div class="table-wrap">
+        <div class="table-header">
+          <h3>📚 Каталог книг</h3>
+          <button class="btn btn-primary btn-sm" onclick="openAddBook()">+ Добавить</button>
+        </div>
+        <div class="search-row">
+          <input id="searchTitle" placeholder="🔍 Название..." oninput="loadBooks(0)"/>
+          <input id="searchAuthor" placeholder="Автор..." oninput="loadBooks(0)"/>
+          <input id="searchGenre" placeholder="Жанр..." oninput="loadBooks(0)"/>
+          <select id="searchStatus" onchange="loadBooks(0)">
+            <option value="">Все статусы</option>
+            <option value="AVAILABLE">Доступна</option>
+            <option value="RESERVED">Забронирована</option>
+            <option value="ISSUED">Выдана</option>
+          </select>
+        </div>
+        <div id="booksTable"><div class="loading"><div class="spinner"></div><br>Загрузка...</div></div>
+      </div>
+    </div>
+
+    <!-- LOANS -->
+    <div class="page" id="page-loans">
+      <div class="table-wrap">
+        <div class="table-header">
+          <h3>📖 Выдачи книг</h3>
+          <button class="btn btn-primary btn-sm" onclick="openAddLoan()">+ Выдать книгу</button>
+        </div>
+        <div id="loansTable"><div class="loading"><div class="spinner"></div><br>Загрузка...</div></div>
+      </div>
+    </div>
+
+    <!-- RESERVATIONS -->
+    <div class="page" id="page-reservations">
+      <div class="table-wrap">
+        <div class="table-header">
+          <h3>🔖 Бронирования</h3>
+          <button class="btn btn-primary btn-sm" onclick="openAddReservation()">+ Забронировать</button>
+        </div>
+        <div id="reservationsTable"><div class="loading"><div class="spinner"></div><br>Загрузка...</div></div>
+      </div>
+    </div>
+
+    <!-- FINES -->
+    <div class="page" id="page-fines">
+      <div class="table-wrap">
+        <div class="table-header"><h3>💸 Штрафы</h3></div>
+        <div id="finesTable"><div class="loading"><div class="spinner"></div><br>Загрузка...</div></div>
+      </div>
+    </div>
+
+    <!-- USERS -->
+    <div class="page" id="page-users">
+      <div class="table-wrap">
+        <div class="table-header">
+          <h3>👤 Пользователи</h3>
+        </div>
+        <div class="search-row">
+          <input id="searchUser" placeholder="🔍 Поиск по имени..." oninput="loadUsers()"/>
+        </div>
+        <div id="usersTable"><div class="loading"><div class="spinner"></div><br>Загрузка...</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modalBox">
+    <h2 id="modalTitle">—</h2>
+    <div id="modalBody"></div>
+    <div class="modal-footer" id="modalFooter"></div>
+  </div>
+</div>
+
+<div class="toast-container" id="toasts"></div>
+
+<script>
+const API = 'http://localhost:8000/api/v1';
+let token = localStorage.getItem('lms_token') || '';
+let currentUser = JSON.parse(localStorage.getItem('lms_user') || 'null');
+let booksPage = 0;
+let loansPage = 0;
+let resPage   = 0;
+let finesPage = 0;
+
+// ─── UTILS ──────────────────────────────────────────────────────────────────
+function toast(msg, type='info') {
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  const icons = {success:'✓', error:'✕', info:'ℹ'};
+  t.innerHTML = `<span>${icons[type]||'ℹ'}</span><span>${msg}</span>`;
+  document.getElementById('toasts').appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+async function api(method, path, body) {
+  const opts = {
+    method,
+    headers: {'Content-Type':'application/json', ...(token ? {'Authorization':`Bearer ${token}`} : {})}
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(API + path, opts);
+  if (r.status === 204) return null;
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(data.message || data.error || `HTTP ${r.status}`);
+  return data;
+}
+
+function statusBadge(s) {
+  const map = {
+    AVAILABLE:'badge-green',ISSUED:'badge-purple',RESERVED:'badge-yellow',UNAVAILABLE:'badge-gray',
+    ACTIVE:'badge-green',FULFILLED:'badge-blue',CANCELLED:'badge-gray',EXPIRED:'badge-gray',
+    RETURNED:'badge-green',OVERDUE:'badge-red',CANCELLED_:'badge-gray',
+    UNPAID:'badge-red',PAID:'badge-green',
+  };
+  return `<span class="badge ${map[s]||'badge-gray'}">${s}</span>`;
+}
+
+function ageBadge(a) {
+  const map = {'0+':'badge-green','6+':'badge-blue','12+':'badge-purple','16+':'badge-yellow','18+':'badge-red'};
+  return a ? `<span class="badge ${map[a]||'badge-gray'}">${a}</span>` : '—';
+}
+
+function fmt(d) { return d ? new Date(d).toLocaleDateString('ru') : '—'; }
+
+function pager(page, total, totalPages, onPage) {
+  if (totalPages <= 1) return '';
+  let html = '<div class="pagination">';
+  html += `<button class="page-btn" ${page===0?'disabled':''} onclick="${onPage}(${page-1})">‹</button>`;
+  for (let i = Math.max(0,page-2); i <= Math.min(totalPages-1,page+2); i++)
+    html += `<button class="page-btn ${i===page?'active':''}" onclick="${onPage}(${i})">${i+1}</button>`;
+  html += `<button class="page-btn" ${page>=totalPages-1?'disabled':''} onclick="${onPage}(${page+1})">›</button>`;
+  html += `<span class="page-info">Страница ${page+1} из ${totalPages} · ${total} записей</span>`;
+  html += '</div>';
+  return html;
+}
+
+// ─── AUTH ────────────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach((t,i)=>t.classList.toggle('active',(tab==='login'?i===0:i===1)));
+  document.getElementById('loginForm').style.display = tab==='login'?'':'none';
+  document.getElementById('registerForm').style.display = tab==='register'?'':'none';
+}
+
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass  = document.getElementById('loginPass').value;
+  document.getElementById('loginErr').textContent = '';
+  try {
+    const r = await api('POST','/auth/login',{email, password: pass});
+    token = r.token || r.accessToken || r;
+    localStorage.setItem('lms_token', token);
+    // Decode JWT payload
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    currentUser = {name: payload.sub, role: payload.role || (payload.roles?.[0]) || 'READER'};
+    localStorage.setItem('lms_user', JSON.stringify(currentUser));
+    initApp();
+  } catch(e) {
+    document.getElementById('loginErr').textContent = e.message;
+  }
+}
+
+async function doRegister() {
+  document.getElementById('regErr').textContent = '';
+  const body = {
+    firstname: document.getElementById('regFirst').value.trim(),
+    lastname:  document.getElementById('regLast').value.trim(),
+    email:     document.getElementById('regEmail').value.trim(),
+    phone:     document.getElementById('regPhone').value.trim(),
+    birthDate: document.getElementById('regBirth').value || null,
+    password:  document.getElementById('regPass').value,
+  };
+  try {
+    await api('POST','/auth/register', body);
+    toast('Регистрация успешна! Войдите.','success');
+    switchTab('login');
+    document.getElementById('loginEmail').value = body.email;
+  } catch(e) {
+    document.getElementById('regErr').textContent = e.message;
+  }
+}
+
+function logout() {
+  token = ''; currentUser = null;
+  localStorage.removeItem('lms_token');
+  localStorage.removeItem('lms_user');
+  document.getElementById('authWrap').style.display = 'flex';
+  document.getElementById('appWrap').style.display = 'none';
+}
+
+// ─── APP INIT ────────────────────────────────────────────────────────────────
+function initApp() {
+  document.getElementById('authWrap').style.display = 'none';
+  document.getElementById('appWrap').style.display = 'flex';
+  const u = currentUser || {};
+  const name = u.name || '?';
+  document.getElementById('userAvatar').textContent = name[0]?.toUpperCase() || '?';
+  document.getElementById('userName').textContent = name;
+  document.getElementById('userRole').textContent = u.role || '';
+  navigate('dashboard');
+}
+
+// ─── NAVIGATION ──────────────────────────────────────────────────────────────
+const pageTitles = {
+  dashboard:'🏠 Главная', books:'📚 Каталог книг',
+  loans:'📖 Выдачи', reservations:'🔖 Бронирования',
+  fines:'💸 Штрафы', users:'👤 Пользователи'
+};
+const pageLoaders = {
+  dashboard: loadDashboard,
+  books: () => loadBooks(0),
+  loans: () => loadLoans(0),
+  reservations: () => loadReservations(0),
+  fines: () => loadFines(0),
+  users: loadUsers
+};
+
+function navigate(page) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.getAttribute('onclick')?.includes(`'${page}'`)) n.classList.add('active');
+  });
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(`page-${page}`)?.classList.add('active');
+  document.getElementById('pageTitle').textContent = pageTitles[page] || page;
+  document.getElementById('topbarActions').innerHTML = '';
+  pageLoaders[page]?.();
+}
+
+// ─── DASHBOARD ───────────────────────────────────────────────────────────────
+async function loadDashboard() {
+  try {
+    const [books, loans, res, fines] = await Promise.allSettled([
+      api('GET','/books?size=1'),
+      api('GET','/loans?size=5'),
+      api('GET','/reservations?size=1'),
+      api('GET','/fines?size=1'),
+    ]);
+
+    const b = books.status==='fulfilled' ? books.value : null;
+    const l = loans.status==='fulfilled' ? loans.value : null;
+    const rv = res.status==='fulfilled' ? res.value : null;
+    const f = fines.status==='fulfilled' ? fines.value : null;
+
+    document.getElementById('statBooks').textContent = b?.totalElements ?? '—';
+    document.getElementById('statLoans').textContent = l?.totalElements ?? '—';
+    document.getElementById('statRes').textContent   = rv?.totalElements ?? '—';
+    document.getElementById('statFines').textContent = f?.totalElements ?? '—';
+
+    const lList = l?.content || [];
+    if (!lList.length) {
+      document.getElementById('dashLoans').innerHTML = '<div class="empty"><div class="empty-icon">📭</div>Выдач пока нет</div>';
+      return;
+    }
+    let html = '<table><thead><tr><th>ID</th><th>Книга</th><th>Читатель</th><th>Выдана</th><th>Срок возврата</th><th>Статус</th></tr></thead><tbody>';
+    lList.forEach(l => {
+      html += `<tr>
+        <td>#${l.id}</td>
+        <td>${l.bookTitle||'—'}</td>
+        <td>${l.readerName||'—'}</td>
+        <td>${fmt(l.loanDate)}</td>
+        <td>${fmt(l.returnDate)}</td>
+        <td>${statusBadge(l.status)}</td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    document.getElementById('dashLoans').innerHTML = html;
+  } catch(e) {
+    document.getElementById('dashLoans').innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div>Ошибка загрузки: ${e.message}</div>`;
+  }
+}
+
+// ─── BOOKS ───────────────────────────────────────────────────────────────────
+async function loadBooks(page=0) {
+  booksPage = page;
+  const title  = document.getElementById('searchTitle')?.value || '';
+  const author = document.getElementById('searchAuthor')?.value || '';
+  const genre  = document.getElementById('searchGenre')?.value || '';
+  const status = document.getElementById('searchStatus')?.value || '';
+  const params = new URLSearchParams({page, size:15});
+  if (title) params.set('title', title);
+  if (author) params.set('author', author);
+  if (genre) params.set('genre', genre);
+  if (status) params.set('status', status);
+
+  document.getElementById('booksTable').innerHTML = '<div class="loading"><div class="spinner"></div><br>Загрузка...</div>';
+  try {
+    const d = await api('GET', `/books?${params}`);
+    const items = d.content || [];
+    if (!items.length) {
+      document.getElementById('booksTable').innerHTML = '<div class="empty"><div class="empty-icon">📭</div>Книг не найдено</div>';
+      return;
+    }
+    let html = '<table><thead><tr><th>ID</th><th>Название</th><th>Язык</th><th>Стр.</th><th>Цена</th><th>Возраст</th><th>Статус</th><th>Кол-во</th><th></th></tr></thead><tbody>';
+    items.forEach(b => {
+      html += `<tr>
+        <td>#${b.id}</td>
+        <td><strong>${b.title}</strong></td>
+        <td>${b.language||'—'}</td>
+        <td>${b.pageCount||'—'}</td>
+        <td>${b.price!=null?b.price+' ₽':'—'}</td>
+        <td>${ageBadge(b.ageCategory)}</td>
+        <td>${statusBadge(b.status||'AVAILABLE')}</td>
+        <td>${b.count??'—'}</td>
+        <td class="actions">
+          <button class="btn btn-sm btn-ghost" onclick="reserveBook(${b.id},'${b.title?.replace(/'/g,"\\'")}')">🔖</button>
+          <button class="btn btn-sm btn-ghost" onclick="issueBook(${b.id},'${b.title?.replace(/'/g,"\\'")}')">📖</button>
+        </td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    html += pager(page, d.totalElements, d.totalPages, 'loadBooks');
+    document.getElementById('booksTable').innerHTML = html;
+  } catch(e) {
+    document.getElementById('booksTable').innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div>${e.message}</div>`;
+  }
+}
+
+// ─── LOANS ───────────────────────────────────────────────────────────────────
+async function loadLoans(page=0) {
+  loansPage = page;
+  document.getElementById('loansTable').innerHTML = '<div class="loading"><div class="spinner"></div><br>Загрузка...</div>';
+  try {
+    const d = await api('GET', `/loans?page=${page}&size=15`);
+    const items = d.content || [];
+    if (!items.length) {
+      document.getElementById('loansTable').innerHTML = '<div class="empty"><div class="empty-icon">📭</div>Выдач нет</div>';
+      return;
+    }
+    let html = '<table><thead><tr><th>ID</th><th>Книга</th><th>Читатель</th><th>Выдана</th><th>Срок возврата</th><th>Фактически</th><th>Статус</th><th></th></tr></thead><tbody>';
+    items.forEach(l => {
+      const overdue = l.status==='ISSUED' && new Date(l.returnDate) < new Date();
+      html += `<tr>
+        <td>#${l.id}</td>
+        <td>${l.bookTitle||'—'}</td>
+        <td>${l.readerName||l.readerId||'—'}</td>
+        <td>${fmt(l.loanDate)}</td>
+        <td style="${overdue?'color:var(--red)':''}">${fmt(l.returnDate)}</td>
+        <td>${fmt(l.actualReturnDate)}</td>
+        <td>${statusBadge(l.status)}</td>
+        <td class="actions">
+          ${l.status==='ISSUED'||l.status==='OVERDUE' ? `<button class="btn btn-sm btn-success" onclick="returnLoan(${l.id})">Вернуть</button>` : ''}
+        </td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    html += pager(page, d.totalElements, d.totalPages, 'loadLoans');
+    document.getElementById('loansTable').innerHTML = html;
+  } catch(e) {
+    document.getElementById('loansTable').innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div>${e.message}</div>`;
+  }
+}
+
+async function returnLoan(id) {
+  if (!confirm(`Вернуть выдачу #${id}?`)) return;
+  try {
+    await api('PATCH', `/loans/${id}/return`);
+    toast('Книга возвращена','success');
+    loadLoans(loansPage);
+  } catch(e) { toast(e.message,'error'); }
+}
+
+// ─── RESERVATIONS ────────────────────────────────────────────────────────────
+async function loadReservations(page=0) {
+  resPage = page;
+  document.getElementById('reservationsTable').innerHTML = '<div class="loading"><div class="spinner"></div><br>Загрузка...</div>';
+  try {
+    const d = await api('GET', `/reservations?page=${page}&size=15`);
+    const items = d.content || [];
+    if (!items.length) {
+      document.getElementById('reservationsTable').innerHTML = '<div class="empty"><div class="empty-icon">📭</div>Броней нет</div>';
+      return;
+    }
+    let html = '<table><thead><tr><th>ID</th><th>Книга</th><th>Читатель</th><th>Дата брони</th><th>Доступна с</th><th>Статус</th><th></th></tr></thead><tbody>';
+    items.forEach(r => {
+      html += `<tr>
+        <td>#${r.id}</td>
+        <td>${r.bookTitle||r.bookId||'—'}</td>
+        <td>${r.userName||r.readerId||'—'}</td>
+        <td>${fmt(r.reservationDate)}</td>
+        <td>${fmt(r.availableDate)}</td>
+        <td>${statusBadge(r.status)}</td>
+        <td class="actions">
+          ${r.status==='ACTIVE' ? `<button class="btn btn-sm btn-danger" onclick="cancelReservation(${r.id})">Отменить</button>` : ''}
+        </td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    html += pager(page, d.totalElements, d.totalPages, 'loadReservations');
+    document.getElementById('reservationsTable').innerHTML = html;
+  } catch(e) {
+    document.getElementById('reservationsTable').innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div>${e.message}</div>`;
+  }
+}
+
+async function cancelReservation(id) {
+  if (!confirm(`Отменить бронь #${id}?`)) return;
+  try {
+    await api('DELETE', `/reservations/${id}`);
+    toast('Бронь отменена','success');
+    loadReservations(resPage);
+  } catch(e) { toast(e.message,'error'); }
+}
+
+// ─── FINES ───────────────────────────────────────────────────────────────────
+async function loadFines(page=0) {
+  finesPage = page;
+  document.getElementById('finesTable').innerHTML = '<div class="loading"><div class="spinner"></div><br>Загрузка...</div>';
+  try {
+    const d = await api('GET', `/fines?page=${page}&size=15`);
+    const items = d.content || [];
+    if (!items.length) {
+      document.getElementById('finesTable').innerHTML = '<div class="empty"><div class="empty-icon">✅</div>Штрафов нет</div>';
+      return;
+    }
+    let html = '<table><thead><tr><th>ID</th><th>Выдача</th><th>Сумма</th><th>Причина</th><th>Создан</th><th>Статус</th><th></th></tr></thead><tbody>';
+    items.forEach(f => {
+      html += `<tr>
+        <td>#${f.id}</td>
+        <td>#${f.loanId||'—'}</td>
+        <td><strong style="color:var(--red)">${f.amount} ₽</strong></td>
+        <td>${f.reason||'—'}</td>
+        <td>${fmt(f.createdAt)}</td>
+        <td>${statusBadge(f.status)}</td>
+        <td>
+          ${f.status==='UNPAID' ? `<button class="btn btn-sm btn-warn" onclick="payFine(${f.id})">Оплатить</button>` : ''}
+        </td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    html += pager(page, d.totalElements, d.totalPages, 'loadFines');
+    document.getElementById('finesTable').innerHTML = html;
+  } catch(e) {
+    document.getElementById('finesTable').innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div>${e.message}</div>`;
+  }
+}
+
+async function payFine(id) {
+  if (!confirm(`Отметить штраф #${id} как оплаченный?`)) return;
+  try {
+    await api('PUT', `/fines/${id}`, {status:'PAID'});
+    toast('Штраф оплачен','success');
+    loadFines(finesPage);
+  } catch(e) { toast(e.message,'error'); }
+}
+
+// ─── USERS ───────────────────────────────────────────────────────────────────
+async function loadUsers() {
+  document.getElementById('usersTable').innerHTML = '<div class="loading"><div class="spinner"></div><br>Загрузка...</div>';
+  try {
+    const items = await api('GET', '/users');
+    const list = Array.isArray(items) ? items : (items.content || []);
+    const q = document.getElementById('searchUser')?.value?.toLowerCase() || '';
+    const filtered = q ? list.filter(u => (u.firstname+' '+u.lastname).toLowerCase().includes(q)) : list;
+    if (!filtered.length) {
+      document.getElementById('usersTable').innerHTML = '<div class="empty"><div class="empty-icon">📭</div>Пользователей нет</div>';
+      return;
+    }
+    let html = '<table><thead><tr><th>ID</th><th>Имя</th><th>Email</th><th>Телефон</th><th>Дата рождения</th><th>Роль</th><th>Зарег.</th></tr></thead><tbody>';
+    filtered.forEach(u => {
+      html += `<tr>
+        <td>#${u.id}</td>
+        <td><strong>${u.firstname||''} ${u.lastname||''}</strong></td>
+        <td>${u.email||'—'}</td>
+        <td>${u.phone||'—'}</td>
+        <td>${fmt(u.birthDate)}</td>
+        <td><span class="badge ${u.role==='LIBRARIAN'?'badge-purple':u.role==='ADMIN'?'badge-red':'badge-blue'}">${u.role||'READER'}</span></td>
+        <td>${fmt(u.registrationDate)}</td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    document.getElementById('usersTable').innerHTML = html;
+  } catch(e) {
+    document.getElementById('usersTable').innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div>${e.message}</div>`;
+  }
+}
+
+// ─── MODALS ──────────────────────────────────────────────────────────────────
+function openModal(title, body, footer) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalBody').innerHTML = body;
+  document.getElementById('modalFooter').innerHTML = footer;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+
+function openAddBook() {
+  openModal('Добавить книгу',`
+    <div class="form-group"><label>Название *</label><input id="mTitle" placeholder="Название книги"/></div>
+    <div class="form-group"><label>ISBN *</label><input id="mIsbn" placeholder="978-3-16-148410-0"/></div>
+    <div class="form-group"><label>Язык</label><input id="mLang" placeholder="ru" value="ru"/></div>
+    <div class="form-group"><label>Кол-во страниц</label><input id="mPages" type="number" value="100"/></div>
+    <div class="form-group"><label>Цена (₽)</label><input id="mPrice" type="number" value="0"/></div>
+    <div class="form-group"><label>Кол-во экземпляров</label><input id="mCount" type="number" value="1"/></div>
+    <div class="form-group"><label>Возрастная категория</label>
+      <select id="mAge"><option>ZERO_PLUS</option><option>SIX_PLUS</option><option>TWELVE_PLUS</option><option>SIXTEEN_PLUS</option><option>EIGHTEEN_PLUS</option></select>
+    </div>
+    <div class="form-group"><label>Описание</label><input id="mDesc" placeholder="Краткое описание"/></div>
+  `,`<button class="btn btn-ghost" onclick="closeModal()">Отмена</button>
+     <button class="btn btn-primary" onclick="submitAddBook()">Добавить</button>`);
+}
+
+async function submitAddBook() {
+  try {
+    await api('POST','/books',{
+      title: document.getElementById('mTitle').value,
+      isbn: document.getElementById('mIsbn').value,
+      language: document.getElementById('mLang').value,
+      pageCount: +document.getElementById('mPages').value,
+      price: +document.getElementById('mPrice').value,
+      count: +document.getElementById('mCount').value,
+      ageCategory: document.getElementById('mAge').value,
+      description: document.getElementById('mDesc').value,
+    });
+    toast('Книга добавлена','success');
+    closeModal(); loadBooks(0);
+  } catch(e) { toast(e.message,'error'); }
+}
+
+function openAddLoan() {
+  openModal('Выдать книгу',`
+    <div class="form-group"><label>ID книги *</label><input id="mBookId" type="number" placeholder="42"/></div>
+    <div class="form-group"><label>ID читателя *</label><input id="mReaderId" type="number" placeholder="1001"/></div>
+  `,`<button class="btn btn-ghost" onclick="closeModal()">Отмена</button>
+     <button class="btn btn-primary" onclick="submitAddLoan()">Выдать</button>`);
+}
+
+async function submitAddLoan() {
+  try {
+    await api('POST','/loans',{
+      bookId: +document.getElementById('mBookId').value,
+      readerId: +document.getElementById('mReaderId').value,
+    });
+    toast('Книга выдана','success');
+    closeModal(); loadLoans(0);
+  } catch(e) { toast(e.message,'error'); }
+}
+
+function openAddReservation() {
+  openModal('Забронировать книгу',`
+    <div class="form-group"><label>ID книги *</label><input id="mBookId2" type="number" placeholder="42"/></div>
+    <div class="form-group"><label>ID читателя *</label><input id="mReaderId2" type="number" placeholder="1001"/></div>
+  `,`<button class="btn btn-ghost" onclick="closeModal()">Отмена</button>
+     <button class="btn btn-primary" onclick="submitAddReservation()">Забронировать</button>`);
+}
+
+async function submitAddReservation() {
+  try {
+    await api('POST','/reservations',{
+      bookId: +document.getElementById('mBookId2').value,
+      readerId: +document.getElementById('mReaderId2').value,
+    });
+    toast('Бронь создана','success');
+    closeModal(); loadReservations(0);
+  } catch(e) { toast(e.message,'error'); }
+}
+
+function issueBook(bookId, title) {
+  openModal(`Выдать: ${title}`,`
+    <div class="form-group"><label>ID читателя *</label><input id="mReaderId3" type="number" placeholder="1001"/></div>
+  `,`<button class="btn btn-ghost" onclick="closeModal()">Отмена</button>
+     <button class="btn btn-primary" onclick="submitIssueBook(${bookId})">Выдать</button>`);
+}
+
+async function submitIssueBook(bookId) {
+  try {
+    await api('POST','/loans',{bookId, readerId:+document.getElementById('mReaderId3').value});
+    toast('Книга выдана','success');
+    closeModal(); loadBooks(booksPage);
+  } catch(e) { toast(e.message,'error'); }
+}
+
+function reserveBook(bookId, title) {
+  openModal(`Забронировать: ${title}`,`
+    <div class="form-group"><label>ID читателя *</label><input id="mReaderId4" type="number" placeholder="1001"/></div>
+  `,`<button class="btn btn-ghost" onclick="closeModal()">Отмена</button>
+     <button class="btn btn-primary" onclick="submitReserveBook(${bookId})">Забронировать</button>`);
+}
+
+async function submitReserveBook(bookId) {
+  try {
+    await api('POST','/reservations',{bookId, readerId:+document.getElementById('mReaderId4').value});
+    toast('Бронь создана','success');
+    closeModal(); loadBooks(booksPage);
+  } catch(e) { toast(e.message,'error'); }
+}
+
+// ─── BOOT ─────────────────────────────────────────────────────────────────────
+if (token && currentUser) initApp();
+</script>
+</body>
+</html>
