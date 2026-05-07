@@ -13,7 +13,7 @@ public class CreateBookRequest {
     private String isbn;
     private String description;
     private String language;
-    private AgeCategory ageCategory;
+    private String ageCategory;
     private boolean hasAudiobook;
     private int pageCount;
     private int count;

@@ -1,0 +1,18 @@
+server:
+  port: 8000
+
+spring:
+  profiles:
+    active: dev
+library:
+  user:
+    default-role: ${DEFAULT_USER_ROLE:READER}
+
+  fine:
+    daily-rate: ${FINE_DAILY_RATE:10.0}
+
+  reservation:
+    expire-days: ${RESERVATION_EXPIRE_DAYS:3}
+    expire-schedule: "${CRON_EXPIRE_RESERVATIONS_SCHEDULE:0 0 2 * * *}"
+    expire-batch-size: ${RESERVATION_EXPIRE_BATCH_SIZE:500}
+    expire-lock-timeout-ms: ${RESERVATION_EXPIRE_LOCK_TIMEOUT_MS:5000}

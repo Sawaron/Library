@@ -1,6 +1,5 @@
 package com.codeandpray.library.entity;
 
-
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -10,8 +9,8 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @Getter
 @Setter
-@Entity
 @Builder
+@Entity
 @Table(name = "users")
 public class User {
 
@@ -38,7 +37,9 @@ public class User {
     @Column(name = "user_registration_date")
     private LocalDate registrationDate;
 
+    @Column(name = "user_birth_date")
+    private LocalDate birthDate;
+
     @Column(name = "user_role")
     private String role;
-
 }

@@ -80,5 +80,5 @@ public class Book {
     private LocalDateTime updatedAt;
 
     @Enumerated(EnumType.STRING)
-    private BookStatus status;
+    private BookStatus status = BookStatus.AVAILABLE;
 }

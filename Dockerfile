@@ -1,22 +1,12 @@
-# Stage 1 — build
-FROM maven:3.9.9-eclipse-temurin-17 AS build
-
+FROM maven:3.9.6-eclipse-temurin-17 AS builder
 WORKDIR /app
-
 COPY pom.xml .
-RUN mvn -q -e -DskipTests dependency:go-offline
-
+RUN mvn dependency:go-offline -q
 COPY src ./src
+RUN mvn clean package -DskipTests -q
 
-RUN mvn -q -DskipTests package
-
-# Stage 2 — run
-FROM eclipse-temurin:17-jdk
-
+FROM eclipse-temurin:17-jre
 WORKDIR /app
-
-COPY --from=build /app/target/*.jar app.jar
-
+COPY --from=builder /app/target/library-0.0.1-SNAPSHOT.jar app.jar
 EXPOSE 8000
-
 ENTRYPOINT ["java", "-jar", "app.jar"]

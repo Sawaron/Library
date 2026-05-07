@@ -7,6 +7,11 @@ import com.codeandpray.library.entity.Book;
 import com.codeandpray.library.entity.Loan;
 import com.codeandpray.library.entity.User;
 import com.codeandpray.library.enums.LoanStatus;
+import com.codeandpray.library.exception.entity.BookNotFoundException;
+import com.codeandpray.library.exception.entity.LoanNotFoundException;
+import com.codeandpray.library.exception.entity.UserNotFoundException;
+import com.codeandpray.library.exception.logic.LoanAlreadyReturned;
+import com.codeandpray.library.exception.logic.LogicBadRequestException;
 import com.codeandpray.library.mapper.LoanMapper;
 import com.codeandpray.library.repo.BookRepo;
 import com.codeandpray.library.repo.LoanRepo;
@@ -29,6 +34,7 @@ public class LoanService {
     private final UserRepo userRepository;
     private final LoanMapper loanMapper;
     private final FineService fineService;
+    private final AgeRestrictionService ageRestrictionService;
 
     private final Counter loansCreated;
     private final Counter loansReturned;
@@ -53,14 +59,17 @@ public class LoanService {
     @Transactional
     public LoanResponse createLoan(LoanRequest request) {
         Book book = bookRepository.findById(request.getBookId())
-                .orElseThrow(() -> new RuntimeException("Book not found"));
-
-        if (book.getCount() <= 0) {
-            throw new RuntimeException("No copies available in library");
-        }
+                .orElseThrow(() -> new BookNotFoundException("Книга с ID: " + request.getBookId() + " не найдено"));
 
         User user = userRepository.findById(request.getReaderId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("Пользователь с ID: " + request.getReaderId() + " не найден"));
+
+        ageRestrictionService.checkUserCanAccessBook(user, book);
+
+        if (book.getCount() <= 0) {
+            throw new LogicBadRequestException("В данный момент нет свободных экземпляров книги для выдачи", "BOOK_NOT_AVAILABLE");
+        }
+
 
         LocalDate autoReturnDate = LocalDate.now().plusDays(14);
 
@@ -83,7 +92,7 @@ public class LoanService {
     @Transactional
     public LoanResponse updateLoan(Long id, LoanRequest request) {
         Loan loan = loanRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Loan not found"));
+                .orElseThrow(() -> new LoanNotFoundException("Запись о выдаче с ID: " + id + " не найдена"));
 
         if (request.getReturnDate() != null) {
             loan.setReturnDate(request.getReturnDate());
@@ -102,22 +111,22 @@ public class LoanService {
     public LoanResponse getLoanById(Long id) {
         return loanRepository.findById(id)
                 .map(loanMapper::toResponse)
-                .orElseThrow(() -> new RuntimeException("Loan not found"));
+                .orElseThrow(() -> new LoanNotFoundException("Запись о выдаче с ID: " + id + " не найдена"));
     }
 
     @Transactional
     public LoanResponse returnBook(Long id) {
         Loan loan = loanRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Loan not found"));
+                .orElseThrow(() -> new LoanNotFoundException("Запись о выдаче с ID: " + id + " не найдена"));
 
         if (loan.getStatus() == LoanStatus.RETURNED) {
-            throw new RuntimeException("Book is already returned");
+            throw new LoanAlreadyReturned("Книга c ID: " + id + " уже возвращена");
         }
 
-//       TODO: Интегрировать метод МухаммадРасула когда он будет готов
-//        if (LocalDate.now().isAfter(loan.getReturnDate())) {
-//             fineService.generateOverdueFine(loan);
-//        }
+
+        if (LocalDate.now().isAfter(loan.getReturnDate())) {
+            fineService.generateOverDueFine(loan);
+        }
 
         loan.setActualReturnDate(LocalDate.now());
         loan.setStatus(LoanStatus.RETURNED);
@@ -140,10 +149,10 @@ public class LoanService {
     @Transactional
     public void cancelLoan(Long id) {
         Loan loan = loanRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Loan not found"));
+                .orElseThrow(() -> new LoanNotFoundException("Запись о выдаче с ID: " + id + " не найдена"));
 
         if (loan.getStatus() == LoanStatus.RETURNED || loan.getStatus() == LoanStatus.CANCELLED) {
-            throw new RuntimeException("Loan is already processed");
+            throw new LogicBadRequestException("Невозможно отменить заём так как он уже завершен или был отменен ранее","LOAN_ALREADY_PROCESSED");
         }
 
         loan.setStatus(LoanStatus.CANCELLED);
