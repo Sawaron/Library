@@ -28,7 +28,7 @@ public class FineService {
     private final LoanRepo loanRepo;
     private final FineMapper fineMapper;
 
-    @Value("${library.fine.daily-rate:1.0}")
+    @Value("${library.fine.daily-rate:10.0}")
     private double dailyFineRate;
 
     @Transactional(readOnly = true)
