@@ -18,6 +18,7 @@ import com.codeandpray.library.repo.LoanRepo;
 import com.codeandpray.library.repo.UserRepo;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -25,7 +26,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-
 @Service
 public class LoanService {
 
@@ -42,17 +42,22 @@ public class LoanService {
 
     public LoanService(LoanRepo loanRepository, BookRepo bookRepository,
                        UserRepo userRepository, LoanMapper loanMapper,
-                       FineService fineService, MeterRegistry meterRegistry) {
-        this.loanRepository  = loanRepository;
-        this.bookRepository  = bookRepository;
-        this.userRepository  = userRepository;
-        this.loanMapper      = loanMapper;
-        this.fineService     = fineService;
-        this.loansCreated    = Counter.builder("library.loans.created")
+                       FineService fineService,
+                       AgeRestrictionService ageRestrictionService,
+                       MeterRegistry meterRegistry) {
+        this.loanRepository = loanRepository;
+        this.bookRepository = bookRepository;
+        this.userRepository = userRepository;
+        this.loanMapper = loanMapper;
+        this.fineService = fineService;
+        this.ageRestrictionService = ageRestrictionService;
+
+
+        this.loansCreated = Counter.builder("library.loans.created")
                 .description("Количество выданных книг").register(meterRegistry);
-        this.loansReturned   = Counter.builder("library.loans.returned")
+        this.loansReturned = Counter.builder("library.loans.returned")
                 .description("Количество возвращённых книг").register(meterRegistry);
-        this.loansCancelled  = Counter.builder("library.loans.cancelled")
+        this.loansCancelled = Counter.builder("library.loans.cancelled")
                 .description("Количество отменённых выдач").register(meterRegistry);
     }
 
