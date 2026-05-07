@@ -16,7 +16,8 @@ import com.codeandpray.library.mapper.LoanMapper;
 import com.codeandpray.library.repo.BookRepo;
 import com.codeandpray.library.repo.LoanRepo;
 import com.codeandpray.library.repo.UserRepo;
-import lombok.RequiredArgsConstructor;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -26,7 +27,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 
 @Service
-@RequiredArgsConstructor
 public class LoanService {
 
     private final LoanRepo loanRepository;
@@ -35,6 +35,26 @@ public class LoanService {
     private final LoanMapper loanMapper;
     private final FineService fineService;
     private final AgeRestrictionService ageRestrictionService;
+
+    private final Counter loansCreated;
+    private final Counter loansReturned;
+    private final Counter loansCancelled;
+
+    public LoanService(LoanRepo loanRepository, BookRepo bookRepository,
+                       UserRepo userRepository, LoanMapper loanMapper,
+                       FineService fineService, MeterRegistry meterRegistry) {
+        this.loanRepository  = loanRepository;
+        this.bookRepository  = bookRepository;
+        this.userRepository  = userRepository;
+        this.loanMapper      = loanMapper;
+        this.fineService     = fineService;
+        this.loansCreated    = Counter.builder("library.loans.created")
+                .description("Количество выданных книг").register(meterRegistry);
+        this.loansReturned   = Counter.builder("library.loans.returned")
+                .description("Количество возвращённых книг").register(meterRegistry);
+        this.loansCancelled  = Counter.builder("library.loans.cancelled")
+                .description("Количество отменённых выдач").register(meterRegistry);
+    }
 
     @Transactional
     public LoanResponse createLoan(LoanRequest request) {
@@ -65,6 +85,7 @@ public class LoanService {
         bookRepository.save(book);
 
         Loan savedLoan = loanRepository.save(loan);
+        loansCreated.increment();
         return loanMapper.toResponse(savedLoan);
     }
 
@@ -114,6 +135,7 @@ public class LoanService {
         book.setCount(book.getCount() + 1);
         bookRepository.save(book);
 
+        loansReturned.increment();
         return loanMapper.toResponse(loanRepository.save(loan));
     }
 
@@ -129,19 +151,17 @@ public class LoanService {
         Loan loan = loanRepository.findById(id)
                 .orElseThrow(() -> new LoanNotFoundException("Запись о выдаче с ID: " + id + " не найдена"));
 
-
         if (loan.getStatus() == LoanStatus.RETURNED || loan.getStatus() == LoanStatus.CANCELLED) {
             throw new LogicBadRequestException("Невозможно отменить заём так как он уже завершен или был отменен ранее","LOAN_ALREADY_PROCESSED");
         }
 
-
         loan.setStatus(LoanStatus.CANCELLED);
-
 
         Book book = loan.getBook();
         book.setCount(book.getCount() + 1);
         bookRepository.save(book);
 
         loanRepository.save(loan);
+        loansCancelled.increment();
     }
 }

@@ -1,6 +1,17 @@
 server:
   port: 8000
 
-spring:
-  profiles:
-    active: dev
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      application: library-app
